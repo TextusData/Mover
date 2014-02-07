@@ -1,0 +1,17 @@
+# Makefile.textus -*- makefile -*-
+# Copyright (c) 2009 Ross Biro
+# 
+# ThirdParty Makefile to build all the third party tools
+#
+PATH_PREFIX=$(BINROOT)/thirdparty/KeccakCodePackage
+BUILD_TREE=$(OBJROOT)/thirdparty/KeccakCodePackage
+
+SYS=$(shell uname -s)
+
+all:
+	mkdir -p $(BUILD_TREE)
+	tar -cf - . | (cd $(BUILD_TREE) && tar -xvf -)
+	cd $(BUILD_TREE) &&  make
+	mkdir -p $(PATH_PREFIX)/lib $(PATH_PREFIX)/include
+	cp $(BUILD_TREE)/Modes/KeccakHash.h $(BUILD_TREE)/Constructions/*.h $(BUILD_TREE)/KeccakF-1600/*.h $(PATH_PREFIX)/include
+	ar -rc $(PATH_PREFIX)/lib/libkeccak.a $(BUILD_TREE)/bin/reference/Keccak*.o $(BUILD_TREE)/bin/reference/display*.o

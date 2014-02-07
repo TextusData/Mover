@@ -1,0 +1,7 @@
+#!/bin/bash
+# -*- sh -*-
+A=$(git rev-parse --show-cdup)
+if [ "$A" != "" ]; then
+    cd $A
+fi
+pwd

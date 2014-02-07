@@ -1,0 +1,9 @@
+// TestProtoMessage.proto -*- protobuf -*- 
+// Copyright (C) 2010 Ross Biro
+// A protocol buffer to match the Bool class
+
+package textus.file;
+
+message TestProtoMessagePB {
+  optional int32 int_value = 1;
+}

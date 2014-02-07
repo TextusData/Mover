@@ -1,0 +1,9 @@
+// UUID.proto -*- protobuf -*-
+// Copyright (c) 2013 Ross Biro
+// Describes a peer.  Is the first message sent across the link
+
+package textus.base;
+
+message UUID {
+  optional string id=1;
+};

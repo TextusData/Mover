@@ -1,0 +1,12 @@
+# Makefile.textus -*- makefile -*-
+# Copyright (C)  2013 Ross Biro
+#
+# Makefile to build protoc as part of the build process
+#
+PATH_PREFIX=$(BINROOT)/thirdparty/gpg
+BUILD_TREE=$(OBJROOT)/thirdparty/gpg
+
+all:
+	mkdir -p $(BUILD_TREE)
+	tar -cf - . | (cd $(BUILD_TREE) && tar -xvf -)
+	cd $(BUILD_TREE) && CC="gcc -I$(BINROOT)/thirdparty/libgpg-error/include" ./configure --prefix=$(PATH_PREFIX) --with-libgpg-error-prefix=$(BINROOT)/thirdparty/libgpg-error && make && make install

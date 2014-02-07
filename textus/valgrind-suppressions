@@ -1,0 +1,236 @@
+{
+   Don't care about one offs during initialization.
+   Memcheck:Leak
+   ...
+   fun:_Z41__static_initialization_and_destruction_0ii
+}
+{
+   LoggerBug xsputn
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+   fun:_ZNSs7reserveEm
+   fun:_ZNSt15basic_stringbufIcSt11char_traitsIcESaIcEE8overflowEi
+   fun:_ZNSt15basic_streambufIcSt11char_traitsIcEE6xsputnEPKcl
+   fun:_ZN6textus7logging9LoggerBuf6xsputnEPKcl
+}
+{
+   Init App Path
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN6textus4base4init10TextusInitEiPPKcS4_
+}
+{
+   Init init_env
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPcEES0_T_S1_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1ERKSsmm
+   fun:_ZNKSs6substrEmm
+   fun:_ZN6textus4base4init10TextusInitEiPPKcS4_
+}
+{
+   UnitTest test data
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs9_M_mutateEmmm
+   fun:_ZNSs15_M_replace_safeEmmPKcm
+   fun:_ZN6textus7testing8UnitTest10getDataDirEv
+}
+{
+   Unescape String Copy
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+   fun:_ZNSsC1ERKSs
+   fun:_ZN6textus6system11Environment19unescapeCloseParensESs
+}
+{
+   System Environment Not Freed
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN6textus7testing8UnitTest6getDSNEv
+}
+{
+   DB Connect Leak
+   Memcheck:Leak
+   fun:malloc
+   fun:nss_parse_service_list
+   fun:__nss_database_lookup
+   obj:*
+   obj:*
+   fun:getpwuid_r@@GLIBC_2.2.5
+   fun:getpwuid
+   fun:_odbcinst_UserINI
+   fun:SQLGetPrivateProfileString
+   fun:__find_lib_name
+   fun:SQLConnect
+}
+{
+   UnitTest DSN Leak
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+   fun:_ZNSs7reserveEm
+   fun:_ZNSs6appendEPKcm
+   fun:_ZStplIcSt11char_traitsIcESaIcEESbIT_T0_T1_ERKS6_PKS3_
+   fun:_ZN6textus7testing8UnitTest11createNewDBESsi
+}
+{
+   System Environment not freed.
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN6textus7testing8UnitTest11createNewDBESsi
+
+}
+{
+   System Environment Not Freed.
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN6textus7testing8UnitTest11createNewDBESsi
+}
+{
+   App path et all are not freed.
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs9_M_mutateEmmm
+   fun:_ZNSs15_M_replace_safeEmmPKcm
+   fun:_ZN6textus4base4init10TextusInitEiPPKcS4_
+}
+{
+   ProtoBuf Leak 1
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+   fun:_ZNSsC1ERKSs
+   fun:_ZN6google8protobuf24SimpleDescriptorDatabase15DescriptorIndexISt4pairIPKviEE7AddFileERKNS0_19FileDescriptorProtoES6_
+   fun:_ZN6google8protobuf25EncodedDescriptorDatabase3AddEPKvi
+   fun:_ZN6google8protobuf14DescriptorPool24InternalAddGeneratedFileEPKvi
+   fun:_ZN6google8protobuf55protobuf_AddDesc_google_2fprotobuf_2fdescriptor_2eprotoEv
+}
+{
+   ProtoBuf Leak 3
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_parser.cc
+}
+{
+   ProtoBuf Leak 2
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+   fun:_ZNSs7reserveEm
+   fun:_ZNSs6appendERKSs
+   fun:_ZStplIcSt11char_traitsIcESaIcEESbIT_T0_T1_ERKS6_S8_
+   fun:_ZN6google8protobuf24SimpleDescriptorDatabase15DescriptorIndexISt4pairIPKviEE7AddFileERKNS0_19FileDescriptorProtoES6_
+   fun:_ZN6google8protobuf25EncodedDescriptorDatabase3AddEPKvi
+   fun:_ZN6google8protobuf14DescriptorPool24InternalAddGeneratedFileEPKvi
+   fun:_ZN6google8protobuf55protobuf_AddDesc_google_2fprotobuf_2fdescriptor_2eprotoEv
+}
+{
+   OpenSSL unitialized value
+   Memcheck:Value8
+   fun:bn_mul4x_mont
+}
+{
+   OpenSSL unititalized value
+   Memcheck:Cond
+   ...
+   fun:BN_num_bits
+}
+{
+   OpenSSL unititalized value
+   Memcheck:Cond
+   ...
+   fun:BN_num_bits_word
+}
+{
+   OpenSSL Unititialized Variable.
+   Memcheck:Value8
+   fun:EVP_EncodeBlock
+}
+{
+   OpenSSL unititalized value
+   Memcheck:Value8
+   ...
+   fun:BN_num_bits_word
+}
+{
+   OpenSSL unititalized value
+   Memcheck:Value8
+   ...
+   fun:BN_num_bits
+}
+{
+   OpenSSL unititialized variable use.
+   Memcheck:Value8
+   fun:bn_sqr4x_mont
+}
+{
+   OpenSSL Unititialized value.
+   Memcheck:Value8
+   ...
+   fun:RSA_generate_key_ex
+}
+{
+   OpenSSL Unititalized Variable
+   Memcheck:Cond
+   ...
+   fun:RSA_generate_key_ex
+}
+{
+   ODBC Execute
+   Memcheck:Cond
+   fun:QR_read_a_tuple_from_db
+   fun:QR_get_tupledata
+   fun:QR_next_tuple
+   fun:QR_fetch_tuples
+   fun:CC_fetch_tuples
+   fun:CC_send_query_append
+   fun:SC_execute
+   fun:Exec_with_parameters_resolved
+   fun:PGAPI_Execute
+   fun:SQLExecute
+   fun:SQLExecute
+   fun:_ZN6textus2db11DBStatement7executeEv
+}
+{
+   ODBC Connect Unitialized
+   Memcheck:Cond
+   fun:QR_read_a_tuple_from_db
+   fun:QR_get_tupledata
+   fun:QR_next_tuple
+   fun:QR_fetch_tuples
+   fun:CC_fetch_tuples
+   fun:CC_send_query_append
+   fun:CC_lookup_characterset
+   fun:CC_connect
+   fun:PGAPI_DriverConnect
+   fun:SQLDriverConnect
+}
+
+
+

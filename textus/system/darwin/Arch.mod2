@@ -1,0 +1,3 @@
+cc_sources=[OSSysInfo.cc ],
+deps=[textus/file/File, textus/base/Base],
+target=arch.a

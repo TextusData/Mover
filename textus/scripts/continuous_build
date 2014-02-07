@@ -1,0 +1,11 @@
+#!/bin/bash
+# Copyright (c) 2011 Ross Biro -*- sh -*-
+#
+# Build everything and run the unittests.
+#
+CKSUM=$( md5sum $0 )
+PATH=$HOME/bin:$PATH
+while [ "$CKSUM" == "$( md5sum $0 )" ]; do
+    do_tests
+done
+exec continuous_build

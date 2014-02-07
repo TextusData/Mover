@@ -1,0 +1,12 @@
+/* DBCertificateAuthority.cc -*- c++ -*-
+ * Copyright (C) 2013 by Ross Biro
+ *
+ */
+#include "DBCertificateAuthority.h"
+
+namespace textus { namespace keys { namespace db {
+STATIC_DB_DECL(DBCertificateAuthority);
+
+
+}}} //namespace
+

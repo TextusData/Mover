@@ -1,0 +1,12 @@
+cc_sources = [ MemoryAllocator.cc ],
+#proto_sources = [ ],
+target=base.a,
+deps=[ textus/base/init/Init, textus/logging/Logging, textus/base/Base ],
+unittests=[
+{
+	name=MemoryAllocatorTest,
+	target=MemoryAllocatorTest,
+	cc_sources=[ MemoryAllocatorTest.cc ],
+	deps=[ textus/testing/Testing ],
+},
+]

@@ -1,0 +1,23 @@
+#!/bin/bash
+# Copyright (c) 2009 Ross Biro -*- sh -*-
+#
+# Run all the unittests
+# return 0 on success 1 on failure.
+#
+
+if [ "$1" = "" ]; then
+   DIR="$(pwd)"
+else
+   DIR="$1"
+   shift
+fi
+
+cd "$DIR"
+
+make runtests
+if [ $? != 0 ]; then
+    exit 1;
+fi
+
+exit 0
+

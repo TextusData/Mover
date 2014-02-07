@@ -1,0 +1,73 @@
+#!/bin/bash
+# do_tests -*- sh -*- Copyright (C) 2009 Ross Biro
+#
+# Checkout the latest repository and run the tests.
+#
+set -x
+DIR="$HOME/work.$$"
+BUILDLOG="$DIR/buildlog.$$"
+LOGSDIR="/data/build-logs"
+DATE=$(date -u '+%F-%T')
+
+REPOSITORY=~git
+if [ "$1" != "" ]; then
+    REPOSITORY=$1
+    shift
+fi
+cd $HOME
+rm -rf "$DIR" && mkdir "$DIR" && cd "$DIR" 
+if [ "$(pwd)" != "$DIR" ]; then
+    echo Unable to change to directory.
+    exit 1;
+fi
+
+# Now that we know the directory exists, get rid of it on exit.
+trap "rm -rf '$DIR'" exit
+
+git init
+git pull  ~git
+git pull --tags ~git
+PATH="$DIR/textus/scripts:$PATH"
+
+run_tests >"$BUILDLOG" 2>&1 </dev/null
+
+if [ $? == 0 ]; then
+    git tag -s -u unittest@server1.local -a -f -m 'unittest auto generated unstable tag' last-known-good
+    git push --tags ssh://git@epia1.local/home/git
+    rm -f ~/known-bad
+    cd
+    rm -rf "$DIR"
+    touch "$LOGSDIR/current_build_good"
+    exit 0
+fi
+
+rm -f "$LOGSDIR/current_build_good"
+
+NEEDBISECT=0;
+
+if [ ! -e $HOME/known-bad ]; then
+    NEEDBISECT=1;
+fi
+
+if ! diff -q "$BUILDLOG" "$HOME/known-bad"; then
+    NEEDBISECT=1;
+fi
+
+if [ "$NEEDBISECT" == "1" ]; then
+    mv "$BUILDLOG" "$HOME/known-bad"
+    cp -f "$HOME/known-bad" "$LOGSDIR/knwon-bad.$DATE"
+    git bisect start
+    git bisect bad
+    git bisect good last-known-good
+    git bisect run run_tests
+    echo "=============== git bisect log================" >> "$HOME/known-bad"
+    git bisect log >>"$HOME/known-bad"
+    mail ross.biro@gmail.com -s 'Build Broken' <<EOF
+The build is broken.
+EOF
+    git bisect reset
+    cd
+    rm -rf "$DIR"
+fi
+
+

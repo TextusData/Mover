@@ -1,0 +1,209 @@
+/* TimerQueue.h -*- c++ -*-
+ * Copyright (c) 2009, 2013 Ross Biro
+ *
+ * This class is the core of the event dispatching loop.
+ * We use this to transfer signals back and forth, let other
+ * threads no something has happened, etc.
+ */
+
+/*
+ * Lock order is timer then queue.
+ */
+
+#ifndef TEXTUS_EVENT_TIMERQUEUE_H
+#define TEXTUS_EVENT_TIMERQUEUE_H
+
+#include "textus/event/Timer.h"
+#include "textus/base/Thread.h"
+#include "textus/base/ReferenceList.h"
+
+namespace textus { namespace event {
+
+using namespace textus::base::logic;
+using namespace textus::base;
+
+class TimerQueue: virtual public Base {
+private:
+  ReferenceList<Timer *> timer_list;
+  Condition condition;
+  Mutex mutex;
+  Bool wake_up;
+  Bool should_exit;
+  class Thread *timerQueueThread;
+
+  typedef ReferenceList<Timer *>::iterator tl_iterator;
+
+protected:
+  int weakDelete() {
+    Synchronized(this);
+    for (tl_iterator i = timer_list.begin();
+	 i != timer_list.end(); ++i) {
+      (*i)->timerStop();
+    }
+    timer_list.clear();
+    return Base::weakDelete();
+  }
+
+public:
+  TimerQueue():timer_list(), condition(), mutex(), wake_up(false), should_exit(false), timerQueueThread(NULL)
+  {
+  }
+
+  virtual ~TimerQueue();
+
+  static TimerQueue *defaultTimerQueue();
+
+  void addTimer(Timer *t)
+  {
+    Synchronized(this);
+    if (timer_list.empty()) {
+      timer_list.push_front(t);
+      newAlarmTime();
+      return;
+    }
+
+    tl_iterator i = timer_list.begin();
+    if (t->endTime().before((*i)->endTime())) {
+      timer_list.push_front(t);
+      newAlarmTime();
+      return;
+    }
+
+    for (; i != timer_list.end(); ++i) {
+      if (t->endTime().before((*i)->endTime())) {
+	timer_list.insert(i, t);
+	return;
+      }
+    }
+    timer_list.push_back(t);
+  }
+
+  void removeTimer(Timer *t)
+  {
+    Synchronized(this);
+    timer_list.erase(t);
+    newAlarmTime();
+    return;
+  }
+
+  void wake()
+  {
+    LOCK(&mutex);
+    wake_up = true;
+    condition.signal();
+  }
+
+  void newAlarmTime()
+  {
+    wake();
+  }
+
+  void allowSleep()
+  {
+    LOCK(&mutex);
+    wake_up = false;
+  }
+
+  void waitForTimeOut()
+  {
+    Time timeout;
+    {
+      Synchronized(this);
+      allowSleep();
+      if (timer_list.empty()) {
+	timeout = Time::maxTime();
+      } else {
+	Timer *t = timer_list.front();
+	timeout = t->endTime();
+      }
+
+      // Have to grab the mutex before
+      // droping the lock on this so that
+      // we don't have someone change the
+      // start time with out us noticing.
+      mutex.lock();
+    }
+    if (wake_up || should_exit) {
+      mutex.unlock();
+      return;
+    }
+    condition.waitTimeOut(mutex, timeout);
+    mutex.unlock();
+  }
+
+  void processTimeOuts() 
+  {
+    Synchronized(this);
+    Time now = Time::now();
+    while (!timer_list.empty()) {
+      tl_iterator i = timer_list.begin(); 
+      if (now.after((*i)->endTime())) {
+	Timer *t = *i;
+	t->ref();
+	timer_list.erase(i);
+	t->timeOut();
+	t->deref();
+      } else {
+	break;
+      }
+    }
+  }
+
+  // Does not return until wake is called.
+  void timerThreadLoop()
+  {
+    LOCK(&mutex);
+    while (!should_exit) {
+      mutex.unlock();
+      waitForTimeOut();
+      processTimeOuts();
+      mutex.lock();
+    }
+  }
+
+  bool shouldExit()
+  {
+    LOCK(&mutex);
+    return should_exit;
+  }
+
+  void setShouldExit(bool t)
+  {
+    {
+      LOCK(&mutex);
+      should_exit = t;
+    }
+    if (t) {
+      wake();
+    }
+  }
+
+  void setThread(Thread *t)
+  {
+    Synchronized(this);
+    if (timerQueueThread) {
+      timerQueueThread->deref();
+    }
+    timerQueueThread = t;
+    if (timerQueueThread) {
+      timerQueueThread->ref();
+    }
+  }
+
+  Thread *thread()
+  {
+    Synchronized(this);
+    return timerQueueThread;
+  }
+
+  void threadExit()
+  {
+    {
+      Synchronized(this);
+      setShouldExit(true);
+    }
+    timerQueueThread->join();
+  }
+};
+}} //namespace
+#endif // TEXTUS_EVENT_TIMERQUEUE_H

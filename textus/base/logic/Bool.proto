@@ -1,0 +1,9 @@
+// Bool.proto -*- protobuf -*- 
+// Copyright (C) 2009 Ross Biro
+// A protocol buffer to match the Bool class
+
+package textus.base.logic;
+
+message BoolPB {
+  optional uint32 bool_value = 1;
+}

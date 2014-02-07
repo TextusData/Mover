@@ -1,0 +1,21 @@
+# Makefile.textus -*- makefile -*-
+# Copyright (c) 2009 Ross Biro
+# 
+# ThirdParty Makefile to build all the third party tools
+#
+PATH_PREFIX=$(BINROOT)/thirdparty/openssl
+BUILD_TREE=$(OBJROOT)/thirdparty/openssl
+
+SYS=$(shell uname -s)
+ARGS=--prefix=$(PATH_PREFIX) no-idea no-mdc2 no-rc5
+
+ifeq ($(SYS),Darwin)
+CONFIG=./Configure darwin64-x86_64-cc
+else
+CONFIG=./config
+endif
+
+all:
+	mkdir -p $(BUILD_TREE)
+	tar -cf - . | (cd $(BUILD_TREE) && tar -xvf -)
+	cd $(BUILD_TREE) &&  $(CONFIG) $(ARGS) && make depend && make && make test && make install

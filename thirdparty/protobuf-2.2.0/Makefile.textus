@@ -1,0 +1,12 @@
+# Makefile.textus -*- makefile -*-
+# Copyright (C) 2009 Ross Biro
+#
+# Makefile to build protoc as part of the build process
+#
+PATH_PREFIX=$(BINROOT)/thirdparty/protobuf
+BUILD_TREE=$(OBJROOT)/thirdparty/protobuf
+
+all:
+	mkdir -p $(BUILD_TREE)
+	tar -cf - . | (cd $(BUILD_TREE) && tar -xvf -)
+	cd $(BUILD_TREE) && ./configure --prefix=$(PATH_PREFIX) && make && make install

@@ -1,0 +1,13 @@
+// Key.proto -*- protobuf -*-
+// Copyright (c) 2009 Ross Biro
+// Contains a key.
+// Should only be used internally and never 
+// stored.
+
+package textus.keys;
+
+message KeyPB {
+  optional bytes data = 1;
+  optional int32 type = 2;
+};
+

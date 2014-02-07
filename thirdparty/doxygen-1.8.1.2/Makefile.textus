@@ -1,0 +1,18 @@
+# Makefile.textus -*- makefile -*-
+# Copyright (c) 2009 Ross Biro
+# 
+# ThirdParty Makefile to build all the third party tools
+#
+PATH_PREFIX=$(BINROOT)/thirdparty/doxygen
+BUILD_TREE=$(OBJROOT)/thirdparty/doxygen
+
+SYS=$(shell uname -s)
+ARGS=--prefix $(PATH_PREFIX)
+
+CONFIG=./configure 
+
+
+all:
+	mkdir -p $(BUILD_TREE)
+	tar -cf - . | (cd $(BUILD_TREE) && tar -xvf -)
+	cd $(BUILD_TREE) &&  $(CONFIG) $(ARGS) && make && make install

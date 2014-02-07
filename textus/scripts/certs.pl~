@@ -1,0 +1,58 @@
+#!/usr/bin/perl
+
+use strict;
+
+use Getopt::Long;
+use Cwd 'abs_path';
+
+package main;
+
+sub main {
+    my $path = shift;
+    my @args=@_;
+    my $client = undef;
+    my $ca = 1;
+    my $server = 1;
+    my $directory='.';
+    my $CApath = "CA";
+    my %command_line = ('client!' => \$client,
+			'directory=s' => \$directory,
+			'server!' => \$server,
+			'ca|certificate-authority!' => \$ca,
+			'capath=s' => \$CApath,
+	);
+
+    my $CA = "$path/../../obj/thirdparty/openssl/apps/CA.pl";
+    my $OPENSSL = "$path/../../bin/thirdparty/openssl/bin/openssl";
+
+    Getopt::Long::GetOptionsFromArray(\@args, %command_line ) or die "Invalid Options";
+    
+    cwd($directory);
+    system ("rm -rf etc/ssl/certificate.pem etc/ssl/dh_param-pem etc/ssl/key.pm") if ($server);
+    system ("rm -rf client/etc/ssl/CA client/etc/ssl/certificate.pem ".
+	    "client/etc/ssl/dh_param-pem client/etc/ssl/key.pm") if ($client);
+    if ($ca) {
+	system ("rm -rf etc/ssl/$CApath");
+	mkdir $CApath;
+	mkdir "$CApath/certs";
+	mkdir "$CApath/crl";
+	mkdir "$CApath/newcerts";
+	mkdir "$CApath/private";
+	open O, ">$CApath/index.txt";
+	close O;
+	open O, ">$CApath/crinumber";
+	print O "01\n";
+	close O;
+	system ("$OPENSSL req -keyout $CApath/private/cakey.pem -out $CApath/careq.pem");
+	system ("$OPENSSL ca --create_serial -out $CApath/cacert.pem -days=366 -batch -keyfile ".
+		"$CApath/private/cakey.pem -selfsign -extensions v3_ca -inflies $CApath/careq.pem");
+    }
+
+    if ($server) {
+	system ("$OPENSSL req -new -x509 -keyout newkey.pem -out newcert.pem -days=366");
+	
+    }
+    
+}
+
+main(abs_path($0), @ARGV) unless (caller);

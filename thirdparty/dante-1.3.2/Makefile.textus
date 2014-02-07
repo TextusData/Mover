@@ -1,0 +1,21 @@
+# Makefile.textus -*- makefile -*-
+# Copyright (c) 2009 Ross Biro
+# 
+# ThirdParty Makefile to build all the third party tools
+#
+PATH_PREFIX=$(BINROOT)/thirdparty/dante
+BUILD_TREE=$(OBJROOT)/thirdparty/dante
+CCFLAGS=
+SYS=$(shell uname -s)
+ARGS=--prefix=$(PATH_PREFIX) --disable-clientdl --disable-serverdl --disable-server
+
+ifeq ($(SYS),Darwin)
+CONFIG=./configure
+else
+CONFIG=./config
+endif
+
+all:
+	mkdir -p $(BUILD_TREE)
+	tar -cf - . | (cd $(BUILD_TREE) && tar -xvf -)
+	cd $(BUILD_TREE) &&  $(CONFIG) $(ARGS) && make && make test && make install

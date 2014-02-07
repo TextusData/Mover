@@ -1,0 +1,64 @@
+#!/usr/bin/perl 
+# -*- perl -*
+
+use Getopt::Long;
+use strict;
+
+sub hostname {
+  return system('hostname');
+}
+
+sub main {
+    my $timeallowed = 30;
+    my %options=('timeallowed=i' => \$timeallowed);
+    my $status=0;
+    my $tmpdir;
+
+    
+    Getopt::Long::GetOptionsFromArray(\@_, %options) or die "Bad Options.";
+    
+
+    unless ($ENV{TMPDIR}) {
+	do {
+	    $tmpdir ="/data/tmp/" . hostname() . "time-" . localtime(time) . "/pid-" . $$ ."/rnd-".rand(10);
+	    $tmpdir =~ s/ /_/g;
+	} while (-e $tmpdir);
+	system ("mkdir -p $tmpdir");
+	$ENV{TMPDIR}=$tmpdir;
+    }
+
+    my $pid;
+
+    eval {
+	local $SIG{ALRM} = sub { die "alarm\n" };
+	#$ENV{ODBCINI}='/Users/rossb/.odbc.ini';
+	#for my $key (sort keys %ENV) {
+	#  print "$key = $ENV{$key}\n";
+	#}
+	alarm $timeallowed;
+	$pid = fork;
+	if ($pid == 0) {
+	    setpgrp;
+	    exec @_;
+	}
+	waitpid $pid, 0;
+	$status=$?;
+	alarm 0;
+    };
+
+    if ($@) {
+	die unless $@ eq "alarm\n";
+	kill "TERM", -$pid;
+	kill 9, -$pid;
+	print STDERR "\nTimed out.\n";
+	exit 1;
+    }
+
+    system ("rm -rf $tmpdir") if ($tmpdir and -e $tmpdir);
+
+    print "Runtest exiting with signal = ".($status & 0xFF) . ", status= ".($status >> 8)." return value = ".(($status >> 8) | $status)."\n" if ($status);
+    exit (($status>>8) | $status);
+}
+
+main(@ARGV) unless (caller);
+

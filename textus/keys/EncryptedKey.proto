@@ -1,0 +1,10 @@
+// EncryptedKey.proto -*- protobuf -*-
+// Copyright (c) 2009 Ross Biro
+// Contains a key encrypted by a private key.
+
+package textus.keys;
+
+message EncryptedKeyPB {
+  optional bytes data = 1;
+};
+
