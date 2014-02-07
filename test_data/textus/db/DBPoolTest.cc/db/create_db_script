@@ -1,0 +1,14 @@
+-- create_db_script -*- sql -*-
+-- Comments start with a -- 
+-- creates and populates the database for
+-- DBPoolTest.cc
+
+create table dbinstances ( pk char(35) primary key, name char(20) default '', dsn varchar);
+
+insert into dbinstances(pk, dsn) values ('00000000-00000000-00000000-00000001', '$(TEST_DSN0)');
+insert into dbinstances(pk, dsn) values ('00000000-00000000-00000000-00000002', '$(TEST_DSN1)');
+
+create table test_table (name varchar(64), value integer);
+insert into test_table(name, value) values ('a', 1);
+insert into test_table(name, value) values ('b', 2);
+

@@ -1,0 +1,7 @@
+-- create_db_script
+-- Comments start with a -*- sql -*-
+-- creates and populates the database for
+-- DBAutoDerefTest.cc
+
+create table test_table ( pk char(36) primary key, key varchar);
+

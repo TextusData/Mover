@@ -1,0 +1,10 @@
+# global settings
+
+#children
+children=[
+{
+	name=test1,
+	command=sleep,
+	args=[ 30],
+}
+]

@@ -1,0 +1,10 @@
+-- create_db_script
+-- Comments start with a -*- sql -*-
+-- creates and populates the database for
+-- DBAutoDerefTest.cc
+
+create table test_table_2 ( pk char(35) primary key, name varchar);
+create table test_table_1 (pk char(35) primary key, fk char(35) references test_table_2 (pk));
+
+insert into test_table_2(pk, name) values ('00000000-00000000-00000000-00000001', 'Row 1');
+insert into test_table_1(pk, fk)  values ('00000000-00000000-00000000-00000002', '00000000-00000000-00000000-00000001');
