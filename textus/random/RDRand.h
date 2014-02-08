@@ -1,5 +1,5 @@
 /* RDRand.h -*- c++ -*-
- * Copyright (c) 2013 Ross Biro
+ * Copyright (c) 2013, 2014 Ross Biro
  *
  * Attempt to use RDRand instruction to generate
  * some entropy. 
@@ -24,23 +24,6 @@
  * the entropy, but there is no guarantee it will increase it against
  * any particular advisory.
  */
-
-/*
- *   This program is free software: you can redistribute it and/or
- *   modify it under the terms of the GNU General Public License as
- *   published by the Free Software Foundation, version 3 of the
- *   License.
- *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *   General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program.  If not, see
- *   <http://www.gnu.org/licenses/>.
- *
- */
 #include "textus/random/PRNG.h"
 
 #ifndef TEXTUS_RANDOM_RDRAND_H_
@@ -51,13 +34,20 @@ namespace textus { namespace random {
 class RDRand: public PRNG {
 private:
   bool test_rdrand();
+  bool rdrand_available;
 
 protected:
   virtual uint64_t randombits(int bits);
 
- public:
-  explicit RDRand() {}
+public:
+  explicit RDRand(): rdrand_available(false) {}
   virtual ~RDRand() {}
+
+  virtual int seed(uint64_t sd) {
+    rdrand_available = test_rdrand();
+    return 0;
+  }
+
 };
 
 class RDRandFactory: public PRNGFactory {

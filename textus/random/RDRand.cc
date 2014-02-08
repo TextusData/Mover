@@ -1,24 +1,7 @@
 /* RDRand.cc -*- c++ -*-
- * Copyright (c) 2013 Ross Biro
+ * Copyright (c) 2013, 2014 Ross Biro
  *
  * See rdrand.h for important warning.
- *
- */
-
-/*
- *   This program is free software: you can redistribute it and/or
- *   modify it under the terms of the GNU General Public License as
- *   published by the Free Software Foundation, version 3 of the
- *   License.
- *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *   General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program.  If not, see
- *   <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -50,7 +33,7 @@ bool RDRand::test_rdrand() {
   sh.setsignal(SIGILL);
   sh.setaction(textus::base::SignalHandler::IGNORE);
   (void)rdrand(&ignored, 1);
-  return sh.signals_caught() > 0;
+  return sh.signals_caught() == 0;
 }
 
 uint64_t RDRand::randombits(int bits) {
@@ -59,6 +42,9 @@ uint64_t RDRand::randombits(int bits) {
   uint64_t raw;
   uint64_t mask = (1 << bits) - 1;
   int ret=0;
+  if (!rdrand_available) {
+    return raw;
+  }
   HRZ(rdrand(&raw));
   if (bits == 64) {
     results = results ^ raw;
