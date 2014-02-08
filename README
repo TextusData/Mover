@@ -1,0 +1,81 @@
+Textus Mover is an email system designed to eliminate the meta-data
+that so many agencies are after. With Textus Mover neither the from
+nor to fields exist.  Encryption is used to determine who a message is
+to, and the from address is entirely optional.  Anyone interested in
+privacy or anonymity stands to benefit from using Textus Mover.
+
+For more information please visit our website at
+https://www.textusdata.com
+
+
+Installation
+
+Before installing Textus Mover, you should verify the source.  It is
+currently available from both GitHub and www.textusdata.com.  One
+potential verification step is to download a copy from both sites and
+make sure they are identical.  Any discrepancies need to be
+investigated and noted on the mailing lists.
+
+We include the source for several of the external packages we use in
+the Mover repository.  You should not trust our versions, but rather
+obtain a clean version straight from a trusted source.  Then verify
+that our version is the same.  We provide the third party code since
+when building a version to be installed on many systems, it is best to
+be sure of what version of your dependencies are being used.  Feel
+free to use versions of any of the software you already have
+installed.
+
+If you have an appropriate skill set, you should examine the source
+code and look for bugs or backdoors.  If you find any, please report
+them on the mailing list and bugzilla.
+
+Finally you should subscribe to the appropriate mailing lists, ask
+questions and post your thoughts.  If enough people examine the code,
+any backdoors or bugs should become apparent.
+
+We make no effort to sign the code since you should not trust us
+anyway.  Verify the code. The code stands on its own for better or
+worse.
+
+
+Building
+
+After you have convinced yourself that the source code is legitimate,
+you are ready to attempt to build Mover.  Building mover requires
+several external programs, including perl, gcc, gmake, and git.  To
+build Mover on a compatible system, type make in the top level
+directory.  If you want to run the unittests type make runtests.
+
+The framework assumes that /data is a directory it can write to for
+logs, spool files, etc.  This can be changed on the command line or in
+a config file, or even editing the default in the source before you
+compile.  You will need a /data directory to run the unittests.
+
+When the build is complete, binaries are placed in bin/textus/mover.
+The third party libraries that are required to run will be under
+bin/thridparty.  The test framework sets LD_LIBRARY_PATH to be able to
+run the programs.
+
+It makes sense to copy all the libraries, and binaries to a single
+directory and run everything from that directory.  In fact, the
+framework assumes that you will do this.  Currently there is no script
+or program to help you move all the binaries to an appropriate place.
+
+It is worth point out two binaries that are built as part of Mover.
+otp generates random files using the same random number generator as
+Mover.  Assuming you believe the Mover random number generator is
+sufficiently random, otp is a good way to generate one time pads.  The
+second program is xor.  xor is  like cat.  It copies the file named
+by its first argument to stdout.  However, it xors the data with the
+contents of the second argument before writing it to stdout.  If the
+first file is longer than the second, xor uses the third, and so on
+until the first file has been totally copied to stdout.  It is an
+error if the first file is longer than the rest of the files combined.
+xor could be used to implement one time pads.  The first file would be
+the data to be encrypted, and the rest of the files represent the pad.
+
+If you have more questions, join the mailing lists, or use the form.
+Currently we have three mailing lists, mover-announce@textusdata.com,
+mover-dev@textusdata.com, and mover-user@textusdata.com.  Please go to
+www.textusdata.com and click on support if you wish to join one of the
+mailing lists or use the forums.
