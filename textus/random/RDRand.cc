@@ -7,6 +7,7 @@
 
 #include "textus/random/RDRand.h"
 #include "textus/base/SignalHandler.h"
+#include "textus/system/SysInfo.h"
 
 namespace textus { namespace random {
  
@@ -28,12 +29,8 @@ static int rdrand(uint64_t *rand_out, int retry_loops = 30 /* arbitrary. */) {
 /* End of borrowed code. */
 
 bool RDRand::test_rdrand() {
-  textus::base::SignalHandler sh;
-  uint64_t ignored;
-  sh.setsignal(SIGILL);
-  sh.setaction(textus::base::SignalHandler::IGNORE);
-  (void)rdrand(&ignored, 1);
-  return sh.signals_caught() == 0;
+  return textus::system::SysInfo::systemInformation()->getCPUFlag("rdrand");
+
 }
 
 uint64_t RDRand::randombits(int bits) {

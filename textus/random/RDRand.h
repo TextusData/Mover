@@ -45,6 +45,9 @@ public:
 
   virtual int seed(uint64_t sd) {
     rdrand_available = test_rdrand();
+    if (!rdrand_available) {
+      LOG(INFO) << "RDRAND not available.  Possible reduction in quality of random numvers.\n";
+    }
     return 0;
   }
 
