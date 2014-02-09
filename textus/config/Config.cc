@@ -333,6 +333,7 @@ int Config::readFile(TextusFile *fh, ConfigData *r) {
 	    ret = -1;
 	    goto error_out;
 	  }
+	  HRTRUE(stack.size() != 0);
 	  r = stack.front();
 	  stack.pop_front();
 	} else if (line[j] == '}') {
@@ -342,6 +343,7 @@ int Config::readFile(TextusFile *fh, ConfigData *r) {
 	    ret = -1;
 	    goto error_out;
 	  }
+	  HRTRUE(stack.size() != 0);
 	  r = stack.front();
 	  stack.pop_front();
 	}
@@ -423,6 +425,9 @@ int Config::readFile(TextusFile *fh, ConfigData *r) {
     goto error_out;
   }
  error_out:
+  if (ret != 0) {
+    LOG(INFO) << "parse error at line " << linenum << "\n";
+  }
   return ret;
 }
 
