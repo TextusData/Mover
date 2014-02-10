@@ -1,5 +1,5 @@
 /* NetworkAddress.h -*- c++ -*-
- * Copyright (c) 2010-2013 Ross Biro
+ * Copyright (c) 2010-2014 Ross Biro
  *
  * Represents a network address.
  *
@@ -245,7 +245,7 @@ public:
 #endif
     sin->sin_family = AF_INET;
     sin->sin_port = 0;
-    sin->sin_addr.s_addr = *reinterpret_cast<const in_addr_t *>(d.c_str());
+    sin->sin_addr.s_addr = INADDR_LOOPBACK;
     assoc[sin->sin_family].push_back(addr);
   }
 

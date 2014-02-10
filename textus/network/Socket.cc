@@ -1,5 +1,5 @@
 /* Socket.cc -*- c++ -*-
- * Copyright (c) 2009, 2013 Ross Biro
+ * Copyright (c) 2009, 2013, 2014 Ross Biro
  *
  * Represents a network socket.
  *
@@ -177,11 +177,11 @@ int Socket::connect(URL *url) {
     connect_helper = sch;
     addWatcher(sch);
     setNonBlocking(true);
-    HRC(connect(getSocksServer()));
     if (!non_blocking) {
       while(connect_helper != NULL) {
 	wait();
       }
+      HRC(connect(getSocksServer()));
       setNonBlocking(false);
     }
   } else {
@@ -200,17 +200,27 @@ int Socket::connect(URL *url) {
 }
 
 NetworkAddress *Socket::getSocksServer() {
-  static URL *url;
+  AUTODEREF(URL *, url);
   static Base lock;
+  static NetworkAddress *na=NULL;
   Synchronized(&lock);
-  if (url != NULL) {
-    return url->getAddress();
+  if (na != NULL) {
+    return na;
   }
+
   url = URL::parseURL(socket_default_socks_server);
   if (url == NULL) {
     return NULL;
   }
-  return url->getAddress();
+
+  na = url->getAddress();
+  if (na == NULL) {
+    return NULL;
+  }
+
+  na->waitForNameResolution();
+  na->setPort(url->port());
+  return na;
 }
 
 void Socket::sendData(string data) {

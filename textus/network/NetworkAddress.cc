@@ -733,7 +733,24 @@ NetworkAddress *NetworkAddress::resolve(string hostname)
   NetworkAddress *na = new NetworkAddress();
   na->setHostname(hostname);
   addressCache[hostname] = na;
-  na->startResolve();
+  if (hostname == "localhost") {
+    struct address addr;
+    addr.saddr_len = INET_ADDRSTRLEN;
+    addr.saddr =
+      static_cast<struct sockaddr *>(malloc(sizeof(struct sockaddr)));
+    struct sockaddr_in *sin =
+      reinterpret_cast<struct sockaddr_in *>(addr.saddr);
+#ifdef HAVE_SIN_LEN
+    sin->sin_len = addr.saddr_len;
+#endif
+    sin->sin_family = AF_INET;
+    sin->sin_port = 0;
+    sin->sin_addr.s_addr = INADDR_LOOPBACK;
+    na->assoc[sin->sin_family].push_back(addr);
+    na->setValid(true);
+  } else {
+    na->startResolve();
+  }
 
   return na;
 }
