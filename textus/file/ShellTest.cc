@@ -54,7 +54,7 @@ ShellTest::~ShellTest()
 
 void ShellTest::run_tests() {
   string long_string;
-  for (int i = 0; i < 400; ++i) {
+  for (int i = 0; i < 100; ++i) {
     long_string = long_string + "This is a test.  This is only a test.\n";
   }
 
