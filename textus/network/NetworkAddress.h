@@ -245,7 +245,7 @@ public:
 #endif
     sin->sin_family = AF_INET;
     sin->sin_port = 0;
-    sin->sin_addr.s_addr = INADDR_LOOPBACK;
+    sin->sin_addr.s_addr = *reinterpret_cast<const in_addr_t *>(d.c_str());;
     assoc[sin->sin_family].push_back(addr);
   }
 

@@ -25,6 +25,7 @@
 #include "textus/network/Socket.h"
 #include "textus/network/URL.h"
 #include "textus/system/SysInfo.h"
+#include "textus/event/Event.h"
 
 namespace textus { namespace network {
 
@@ -39,9 +40,32 @@ static long bytes_sent;
 
 void SocketHelper::close() {
   Synchronized(this);
-  parent()->removeWatcher(this);
-  parent()->setHelper(next());
+  if (parent()) {
+    parent()->removeWatcher(this);
+    if (old_factory()) {
+      parent()->setEventFactory(old_factory());
+    }
+    parent()->setHelper(next());
+    parent()->watchWrite();
+    if (next() != NULL) {
+      next()->watch();
+    }
+  }
   set_parent(NULL);
+}
+
+void SocketHelper::watch() {
+
+  AUTODEREF(SocketEventFactory *, sef);
+  sef = new SocketEventFactory(parent());
+  if (sef == NULL) {
+    LOG(ERROR) << "Unable to create new socket event factory.\n";
+    return;
+  }
+  set_old_factory(dynamic_cast<textus::file::FileHandleEventFactory *>(parent()->eventFactory()));
+   parent()->setEventFactory(sef);
+
+  parent()->addWatcher(this);
 }
 
 
@@ -55,29 +79,33 @@ public:
   explicit SocketSocksHelper(Socket *p, URL *u): SocketHelper(p),
 						 url_(u), wrote(false) {}
   virtual ~SocketSocksHelper() {}
-  virtual void signalReceived() {
-    Socket *sock = parent();
-    if (sock->hadError()) {
+
+  virtual int eventReceived(textus::event::Event *e) {
+    SocketEvent *se = dynamic_cast<SocketEvent *>(e);
+    if (se == NULL) {
+      return 0;
+    }
+    if (se->error()) {
       close();
-      return;
+      return 0;
     }
 
-    if (!sock->isConnected()) {
-      return;
-    }
-
-    if (!wrote) {
+    if (se->write()) {
       sendSocksMessage(url());
-      wrote = true;
+      parent()->watchRead();
     } else {
-      // XXXXXXX Fixme: need to deal with partial reads.
-      red = parent()->read(1024);
-      int ret = processSocksMessage(red);
-      if (ret < 0) {
-	parent()->hadError();
+      if (processSocksMessage(se->data()) != 0) {
+	/* Make sure we don't have references to
+	   anything before we try closing them.  Otherwise
+	   we will not be able to delete stuff.
+	*/
+	set_old_factory(NULL);
+	parent()->error(se);
+	parent()->close();
       }
       close();
     }
+    return 1;
   }
 
   int processSocksMessage(string mess) {
@@ -87,12 +115,12 @@ public:
     if (length != 8) {
       return -1;
     }
-    if (buff[0] != 0x04) {
+    if (buff[0] != 0x04 && buff[0] != 0) {
       LOG(INFO) << "Got unknown socks return packet version: " <<
 	(unsigned)buff[0] << "\n";
       return -1;
     }
-    if (buff[1] != 0x90) {
+    if (buff[1] != 90) {
       LOG(INFO) << "Got socks error: " << 
 	(unsigned)buff[1] << "\n";
       return -1;
@@ -174,14 +202,15 @@ int Socket::connect(URL *url) {
   if (socket_use_socks) {
     bool non_blocking = nonBlocking();
     sch = new SocketSocksHelper(this, url);
+    HRNULL(sch);
     connect_helper = sch;
-    addWatcher(sch);
     setNonBlocking(true);
+    sch->watch();
+    HRC(connect(getSocksServer()));
     if (!non_blocking) {
       while(connect_helper != NULL) {
 	wait();
       }
-      HRC(connect(getSocksServer()));
       setNonBlocking(false);
     }
   } else {
@@ -192,6 +221,7 @@ int Socket::connect(URL *url) {
     NetworkAddress *na = url->getAddress();
     HRNULL(na);
     sch = new SocketConnectHelper(this, na);
+    HRNULL(sch);
     na->addWatcher(sch);
     connect_helper = sch;
   }
@@ -219,7 +249,7 @@ NetworkAddress *Socket::getSocksServer() {
   }
 
   na->waitForNameResolution();
-  na->setPort(url->port());
+  na->setPort(htons(url->port()));
   return na;
 }
 

@@ -1,5 +1,5 @@
 /* Timer.cc -*- c++ -*-
- * Copyright (c) 2009, 2013 Ross Biro
+ * Copyright (c) 2009, 2013, 2014 Ross Biro
  *
  * This class is the core of the event dispatching loop.
  * We use this to transfer signals back and forth, let other
@@ -41,11 +41,18 @@ void Timer::timerStart(Duration time_out, TimerQueue *queue)
     queue = defaultTimerQueue();
   }
 
-  Synchronized(this);
-  start_time = Time::now();
-  end_time = start_time + time_out;
+  {
+    // can't hold this lock while
+    // we put the timer on the queue.
+    // The lock order is queue, then
+    // timer.  We would have it backwards.
+    Synchronized(this);
+    start_time = Time::now();
+    end_time = start_time + time_out;
+    tq = queue;
+  }
   queue->addTimer(this);
-  tq = queue;
+
 }
 
 void Timer::timerStop() {

@@ -1,5 +1,5 @@
 /* ProtoBufReader.h -*- c++ -*-
- * Copyright (c) 2010, 2013 Ross Biro
+ * Copyright (c) 2010, 2013, 2014 Ross Biro
  *
  * A class to read one or more protobufs from a file.
  *
@@ -62,12 +62,7 @@ private:
 
 protected:
   virtual int weakDelete() {
-    if (fh) {
-      fh->setEventFactory(NULL);
-      fh->close();
-      fh = NULL;
-    }
-    factory = NULL;
+    close();
     return Base::weakDelete();
   }
 
@@ -127,6 +122,19 @@ public:
   FileHandle *handle() {
     Synchronized(this);
     return fh;
+  }
+
+  virtual void close() {
+    Synchronized(this);
+    factory = NULL;
+    if (fh) {
+      AUTODEREF(FileHandle *, tmp);
+      tmp = fh;
+      tmp->ref();
+      fh = NULL;
+      tmp->setEventFactory(NULL);
+      tmp->close();
+    }
   }
 
 };

@@ -15,3 +15,14 @@
 #emacs tilde files
 *~
 
+#emacs backup files
+\#* 
+*#
+.#*
+
+# Left around by patch
+*.orig
+*.rej
+
+
+

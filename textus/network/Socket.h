@@ -52,13 +52,15 @@ DECLARE_BOOL_ARG(socket_use_socks);
 
 class SocketHelper: virtual public textus::event::EventWatcher {
 private:
-  MVAR(public, SocketHelper, next);
+  MVAR(public, SocketHelper, next); // last on first off
   MVAR(public, Socket, parent);
+  MVAR(public, textus::file::FileHandleEventFactory, old_factory);
 
 public:
   explicit SocketHelper(Socket *p):  parent_(p) {}
   virtual ~SocketHelper() {}
   virtual void close();
+  virtual void watch();
 };
 
 class SocketAddressHelper: public SocketHelper {
@@ -84,14 +86,18 @@ private:
   AutoWeakDeref<Socket> parent;
   AutoDeref<NetworkAddress> peer;
   string data;
-  AutoDeref<SocketHelper> connect_helper;
   int port;
 
 protected:
+  AutoDeref<SocketHelper> connect_helper;
   bool connected;
 
   virtual int connect(int fd, const struct sockaddr *sa, socklen_t sl) {
     return ::connect(fd, sa, sl);
+  }
+
+  virtual int read(int fd, void *buff, size_t buff_size) {
+    return FileHandle::read(fd, buff, buff_size);
   }
 
 public:
@@ -105,6 +111,21 @@ public:
       setParentSocket(NULL);
       p->childDead(this);
     }
+  }
+
+  // needed by socket helpers.
+  void watchRead() {
+    Synchronized(this); 
+    watch_write = false;
+    watch_read = true;
+    wakeMonitor();
+  }
+
+  void watchWrite() {
+    Synchronized(this); 
+    watch_write = true;
+    watch_read = false;
+    wakeMonitor();
   }
 
   void setHelper(SocketHelper *h) {

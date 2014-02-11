@@ -1,5 +1,5 @@
 /* Event.cc -*- c++ -*-
- * Copyright (c) 2009, 2013 Ross Biro
+ * Copyright (c) 2009, 2013, 2014 Ross Biro
  *
  * This class is the core of the event dispatching loop.
  * We use this to transfer signals back and forth, let other
@@ -60,7 +60,6 @@ void Event::post(EventQueue *queue)
   if (current_queue) {
     LOG(WARNING) << "Event switching from queue " << current_queue << " to queue " << queue << "."
 		 << "Originally posted " << posted.elapsedTime() << ".  System Likely unstable.\n";
-    current_queue->weakDeref();
   }
 
   if (!queue) {
@@ -70,7 +69,6 @@ void Event::post(EventQueue *queue)
   }
 
   posted = Time::now();
-  queue->weakRef();
   current_queue = queue;
   this->timerStart(defaultTimeOut());
   queue->post(this);
@@ -103,20 +101,21 @@ void Event::handle()
 {
   Synchronized(this);
   if (preferred_queue) {
-    preferred_queue->deref();
     preferred_queue = NULL;
   }
      
   if (current_queue) {
     current_queue->recordTimeOnQueue(posted.elapsedTime());
-    current_queue->deref();
     current_queue = NULL;
   }
 
-  if (target && target->eventReceived(this) == 0)
+  if (target==NULL || target->eventReceived(this) == 0) {
     do_it();
-  if (target)
+  }
+
+  if (target) {
     target->eventDone(this);
+  }
 }
 
 Duration Event::defaultTimeOut()

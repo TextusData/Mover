@@ -4,7 +4,6 @@
  * Represents a network address.
  *
  */
-
 /*
  *   This program is free software: you can redistribute it and/or
  *   modify it under the terms of the GNU General Public License as
@@ -745,7 +744,7 @@ NetworkAddress *NetworkAddress::resolve(string hostname)
 #endif
     sin->sin_family = AF_INET;
     sin->sin_port = 0;
-    sin->sin_addr.s_addr = INADDR_LOOPBACK;
+    sin->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
     na->assoc[sin->sin_family].push_back(addr);
     na->setValid(true);
   } else {

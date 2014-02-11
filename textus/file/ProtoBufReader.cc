@@ -1,5 +1,5 @@
 /* ProtoBufReader.cc -*- c++ -*-
- * Copyright (c) 2010-2013 Ross Biro
+ * Copyright (c) 2010-2014 Ross Biro
  *
  * A class to read a file one Message at a time.
  *
@@ -281,7 +281,9 @@ void ProtoBufReader::error(InternalProtoBufReaderEvent *lre) {
 void ProtoBufReader::write(InternalProtoBufReaderEvent *lre) {
   Synchronized(this);
   // we need to do a null write in case we are dealing with a secure socket.
-  fh->canWrite(lre);
+  if (fh != NULL) {
+    fh->canWrite(lre);
+  }
   signal();
 }
 

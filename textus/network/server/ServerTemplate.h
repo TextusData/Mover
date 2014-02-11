@@ -1,5 +1,5 @@
 /* ServerTemplate.h -*- c++ -*-
- * Copyright (c) 2010, 2013 Ross Biro
+ * Copyright (c) 2010, 2013, 2014 Ross Biro
  *
  * Class for a simple server.
  *
@@ -158,7 +158,10 @@ public:
   virtual void close() {
     {
       Synchronized(this);
-      lr = NULL;
+      if (lr) {
+	lr->close();
+	lr = NULL;
+      }
       if (processor) {
 	AUTODEREF(T *, p);
 	p = processor;

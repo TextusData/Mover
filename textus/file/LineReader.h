@@ -58,11 +58,7 @@ private:
 
 protected:
   virtual int weakDelete() {
-    if (fh) {
-      fh->setEventFactory(NULL);
-      fh = NULL;
-    }
-    factory = NULL;
+    close();
     return EventTarget::weakDelete();
   }
 
@@ -74,6 +70,19 @@ public:
   explicit LineReader(FileHandle *f);
   virtual ~LineReader() {
     assert(fh == NULL);
+  }
+
+  virtual void close() {
+    Synchronized(this);
+    if (fh) {
+      AUTODEREF(FileHandle *, tmp);
+      tmp = fh;
+      tmp->ref();
+      fh = NULL;
+      tmp->setEventFactory(NULL);
+      tmp->close();
+    }
+    factory = NULL;
   }
 
   string readLine(LineReaderStatus::status &stat);

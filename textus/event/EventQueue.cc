@@ -1,5 +1,5 @@
 /* EventQueue.cc -*- c++ -*-
- * Copyright (c) 2009, 2013 Ross Biro
+ * Copyright (c) 2009, 2013, 2014 Ross Biro
  *
  * Queues up events with the fall back of reposting them if they are
  * not handled in a reasonable amount of time.
@@ -73,11 +73,10 @@ void EventQueue::processEvents()
 
       TimerQueue::defaultTimerQueue()->removeTimer(ev);
 
-      ev->current_queue->weakDeref();
       ev->current_queue = NULL;
 
       if (ev != NULL && !textus::base::init::shutdown_started) {
-	ev->do_it();
+	ev->handle();
       }
     }
     lock.lock();

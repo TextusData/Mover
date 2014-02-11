@@ -1,5 +1,5 @@
 /* SecureSocket.h -*- c++ -*-
- * Copyright (c) 2010-2013 Ross Biro
+ * Copyright (c) 2010-2014 Ross Biro
  *
  * Represents a network socket secured via TLS.
  *
@@ -217,6 +217,13 @@ protected:
   virtual int read(int fd, void *buff, size_t buff_size) {
     Synchronized(this);
     int ret;
+
+    if (connect_helper != NULL) {
+      // We are not really connected yet.  The helpers are still
+      // in charge.
+      return Socket::read(fd, buff, buff_size);
+    }
+
     if (hadError()) {
       return -1;
     }
@@ -243,6 +250,11 @@ protected:
   virtual int write(int fd, const void *buff, size_t buff_size) {
     Synchronized(this);
     int ret;
+    if (connect_helper != NULL) {
+      // We are not really connected yet.  The helpers are still
+      // in charge.
+      return Socket::write(fd, buff, buff_size);
+    }
     if (connecting) {
       processConnect();
       errno = EAGAIN;

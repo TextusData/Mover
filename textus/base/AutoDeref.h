@@ -1,5 +1,5 @@
 /* AutoDeref.h -*- C++ -*-
- * Copyright (C) 2010-2013 Ross Biro
+ * Copyright (C) 2010-2014 Ross Biro
  *
  * A template to automatically deref an pointer
  * when an object is deleted or goes out of scope.
@@ -69,7 +69,10 @@ template <class T> class AutoDeref {
   T *operator = (T *t) {
     if (t != ptr) {
       if (ptr) {
-	const_cast<textus::base::Base *>(static_cast<const textus::base::Base *>(ptr))->deref();
+	T *tmp;
+	tmp = ptr;
+	ptr = NULL;
+	const_cast<textus::base::Base *>(static_cast<const textus::base::Base *>(tmp))->deref();
       }
       ptr = t;
       if (ptr) {
@@ -119,7 +122,10 @@ template <class T> class AutoWeakDeref {
   T *operator = (T *t) {
     if (t != ptr) {
       if (ptr) {
-	ptr->weakDeref();
+	T *tmp;
+	tmp = ptr;
+	ptr = NULL;
+	tmp->weakDeref();
       }
       ptr = t;
       if (ptr) {

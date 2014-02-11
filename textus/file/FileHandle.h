@@ -86,10 +86,7 @@ protected:
   int weakDelete()
   {
     assert(!textus::base::init::shutdown_done);
-    Synchronized(this);
-    Synchronized(&file_list);
-    file_list.erase(this);
-    on_list = false;
+    close();
     return Handle::weakDelete();
   }
 
@@ -103,6 +100,7 @@ public:
 #endif
   }
   virtual ~FileHandle() {
+    close();
     assert(!on_list);
     if (fh != -1) {
       ::close(fh);
