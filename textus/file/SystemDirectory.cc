@@ -48,6 +48,14 @@ public:
     Synchronized(this);
     return FileHandle::openFile(path.c_str(), access, mode);
   }
+
+  bool exists() {
+    struct stat buf;
+    if (stat(path.c_str(), &buf) < 0) {
+      return false;
+    }
+    return true;
+  }
   
   bool unlink() {
     Synchronized(this);
@@ -101,26 +109,34 @@ DirectoryEntry *SystemDirectory::current() {
 
 bool SystemDirectory::createPath(int mode) {
   for (string::size_type p = pth.find('/'); p != string::npos; p = pth.find('/', p+1)) {
+    LOG(DEBUG) << "createPath: p=" << p << "\n";
     if (p == 0) {
       continue;
     }
-    AUTODEREF(SystemDirectory *, sd);
-    sd = new SystemDirectory(pth.substr(0, p));
-    if (!sd->exists()) {
-      LOG(INFO) << "Creating directory: " << pth << std::endl;
+    AUTODEREF(SystemDirectoryEntry *, sde);
+    sde = new SystemDirectoryEntry(pth.substr(0, p));
+    if (!sde->exists()) {
+      LOG(INFO) << "Creating directory: " << pth.substr(0,p) << "\n";
       int ret = mkdir(pth.substr(0,p).c_str(), mode);
       if (ret != 0) {
+	LOG(INFO) << "Unable to create directory " << pth.substr(0, p).c_str()
+		  << " errno: " << errno << "\n";
 	return false;
       }
-    } else if (!sd->isDir()) {
-      LOG(INFO) << "Tried to create directory over existing file: " << pth << std::endl;
+    } else if (!sde->isDir()) {
+      LOG(INFO) << "Tried to create directory over existing file: " << pth << "\n";
       return false;
     }
   }
   if (pth.length() == 0) {
     return true;
   }
-  return mkdir(pth.c_str(), mode) == 0;
+  if (mkdir(pth.c_str(), mode) != 0) {
+    LOG(INFO) << "Unable to create directory " << pth.c_str()
+	       << " errno: " << errno << "\n";
+    return false;
+  }
+  return true;
 }
 
 bool SystemDirectory::isDir() const {

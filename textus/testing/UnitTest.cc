@@ -105,10 +105,11 @@ textus::file::Directory *UnitTest::getDataDir() {
   // now we assume we are running from the build directory.
   AUTODEREF(textus::file::Shell *, shell);
   shell = new textus::file::Shell();
-  shell->setCommand("git rev-parse --show-toplevel");
+  shell->setCommand("A=$(git rev-parse --show-toplevel 2>/dev/null); while [ \"$A\" == \"\" -a $(pwd) != \"/\" ]; do cd .. && A=$(git rev-parse --show-toplevel 2>/dev/null); done; echo $A");
   shell->go();
   shell->waitForCompletion();
   string output = shell->getOutput();
+  assert (output != "");
   size_t end = output.find_first_of("\n\r", 0);
   if (end != string::npos) {
     output = output.substr(0, end);
@@ -283,8 +284,14 @@ int main(int argc, const char *argv[], const char *envp[])
 {
   int ret;
 
+  fprintf (stderr, "\n");
+  for (int i = 0; i < argc; ++i) {
+    fprintf (stderr, "argc[%d]=%s\n", i, argv[i]);
+  }
+  fprintf (stderr, "\n");
+
   // Set this first so it can be overridden during TextusInit
-  textus::base::init::ArgumentAppender::setArg("--log-to-stderr");
+  textus::base::init::ArgumentAppender::setArg("--log_to_stderr");
 
   textus::base::init::TextusInit(argc, argv, envp);
 

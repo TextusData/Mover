@@ -1,5 +1,5 @@
 /* TimerQueue.h -*- c++ -*-
- * Copyright (c) 2009, 2013 Ross Biro
+ * Copyright (c) 2009, 2013, 2014 Ross Biro
  *
  * This class is the core of the event dispatching loop.
  * We use this to transfer signals back and forth, let other
@@ -41,6 +41,7 @@ using namespace textus::base;
 
 class TimerQueue: virtual public Base {
 private:
+  // Lock order, Timer, then list.
   ReferenceList<Timer *> timer_list;
   Condition condition;
   Mutex mutex;
@@ -148,22 +149,28 @@ public:
     mutex.unlock();
   }
 
-  void processTimeOuts() 
-  {
-    Synchronized(this);
-    Time now = Time::now();
-    while (!timer_list.empty()) {
-      tl_iterator i = timer_list.begin(); 
-      if (now.after((*i)->endTime())) {
-	Timer *t = *i;
-	t->ref();
-	timer_list.erase(i);
-	t->timeOut();
-	t->deref();
-      } else {
-	break;
+  void processTimeOuts() {
+    ReferenceList<Timer *> expired;
+    {
+      // have to drop the lock before
+      // processing.  Otherwise we have
+      // a lock order problem.
+      Synchronized(this);
+      Time now = Time::now();
+      while (!timer_list.empty()) {
+	tl_iterator i = timer_list.begin(); 
+	if (now.after((*i)->endTime())) {
+	  expired.push_back(*i);
+	  timer_list.erase(i);
+	} else {
+	  break;
+	}
       }
     }
+    foreach (i, expired) {
+      (*i)->timeOut();
+    }
+    expired.clear();
   }
 
   // Does not return until wake is called.

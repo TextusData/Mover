@@ -165,6 +165,7 @@ int Mover::encryptRandom(string d, string *out) {
   int ret = 0;
   //XXXXXX FixMe, these need to mimic the distribution of
   // real messages.
+  int ret = 0;
   static string methods[] = { string("gpg"), string("openssl") };
   int r = Random::rand(ARRAY_SIZE(methods));
   string method = methods[r];
@@ -172,7 +173,9 @@ int Mover::encryptRandom(string d, string *out) {
   MoverEncryption *me = MoverEncryption::findEncryption(method);
   HRNULL(me);
   keyname = me->tempKey();
+  HRC(me->newKey(keyname));
   HRC(me->encrypt(keyname, d, out));
+
  error_out:
   return ret;
 }
@@ -195,7 +198,7 @@ int Mover::bindServer(string bind_address) {
   mmf()->setTLS(true);
   mmf()->setCiphers(string(SSL_TXT_HIGH));
   mmf()->setcert(cert());
-  mmf()->setcoordinator(this);
+  mmf()->set_coordinator(this);
   mmf()->setverifier(verifier());
   ss()->setSocketFactory(mmf());
 
@@ -491,7 +494,7 @@ SecureMessageServer<MoverMessageProcessor> *Mover::connectToPeer(string peer) {
   HRNULL(ss);
   ss->initTLS(false);
   ss->setCiphers(SSL_TXT_HIGH);
-  ss->setcoordinator(this);
+  ss->set_coordinator(this);
   ss->useCertificate(cert());
   ss->setVerifier(verifier());
   url = URL::parseURL(peer);
@@ -581,9 +584,11 @@ void Mover::waitForShutdown() {
 int Mover::uploadFiles(list<string> files) {
   int count = 0;
   AUTODEREF(SecureMessageServer<MoverMessageProcessor> *, ss);
+  AUTODEREF(MoverMessageProcessor *, mmp);
   ss = connectToPeer(mover_bind_address);
   ss->waitForConnect();
-  MoverMessageProcessor *mmp = ss->getProcessor();
+  mmp = ss->getProcessor();
+  mmp->ref();
   for (list<string>::iterator i = files.begin(); i != files.end(); ++i) {
     AUTODEREF(TextusFile *, tf);
     tf = TextusFile::openFile(*i, O_RDONLY);
@@ -596,8 +601,10 @@ int Mover::uploadFiles(list<string> files) {
     count++;
 
   }
-  Synchronized(mmp);
-  mmp->sendGoodBye();
+  if (mmp) {
+    Synchronized(mmp);
+    mmp->sendGoodBye();
+  }
   return count;
 }
 

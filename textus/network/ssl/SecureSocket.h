@@ -99,13 +99,11 @@ protected:
     ret = SSL_get_error(ssl, ret);
     switch(ret) {
     case SSL_ERROR_WANT_READ:
-      watch_read = true;
-      watch_write = false;
+      watchRead();
       break;
 
     case SSL_ERROR_WANT_WRITE:
-      watch_read = false;
-      watch_write = true;
+      watchRead();
       break;
 
     case SSL_ERROR_SYSCALL:
@@ -228,11 +226,21 @@ protected:
       return -1;
     }
     if (connecting) {
-      processConnect();
+      if (processConnect() == 0) {
+	connected = true;
+	connecting = false;
+	watchRead();
+	signal();
+      }
       errno = EAGAIN;
       return -1;
     } else if (accepting) {
-      processAccept();
+      if (processAccept() == 0) {
+	accepting = false;
+	connected = true;
+	watchRead();
+	signal();
+      }
       errno = EAGAIN;
       return -1;
     } else {
@@ -456,7 +464,7 @@ public:
       if (processAccept() == 0) {
 	accepting = false;
 	connected = true;
-	watch_read = true;
+	watchRead();
 	signal();
       }
       return;
@@ -473,7 +481,7 @@ public:
     if (processConnect() == 0) {
       connected = true;
       connecting = false;
-      watch_read = true;
+      watchRead();
       signal();
     }
   }
@@ -483,7 +491,7 @@ public:
     if (processAccept() == 0) {
       accepting = false;
       connected = true;
-      watch_read = true;
+      watchRead();
       signal();
     }
   }

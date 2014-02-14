@@ -1,5 +1,5 @@
 /* FileHandle.cc -*- c++ -*-
- * Copyright (c) 2009-2013 Ross Biro
+ * Copyright (c) 2009-2014 Ross Biro
  *
  * Represents a system file handle.
  *

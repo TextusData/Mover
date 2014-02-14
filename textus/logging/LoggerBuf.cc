@@ -1,5 +1,5 @@
 /* LoggerBuf.cc -*- c++ -*-
- * Copyright (C) 2009-2013 Ross Biro
+ * Copyright (C) 2009-2014 Ross Biro
  *
  * The internal workings of the logger class.
  */

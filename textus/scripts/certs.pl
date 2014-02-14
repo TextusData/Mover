@@ -30,7 +30,7 @@ sub newcert {
     my $OPENSSL = shift;
     my $cert = shift;
 
-    system ("$OPENSSL req -newkey rsa -nodes -keyout newkey.pem -out newreq.pem -days 366 <<FOO
+    system ("$OPENSSL req -newkey rsa -nodes -keyout newkey.pem -out newreq.pem -days 32765 <<FOO
 US
 VA
 Ashburn
@@ -101,7 +101,7 @@ test\@localhost
 
 
 FOO");
-	system("$OPENSSL ca -create_serial -out $CApath/cacert.pem -days 366 -batch -key test ".
+	system("$OPENSSL ca -create_serial -out $CApath/cacert.pem -days 32765 -batch -key test ".
 		"-keyfile $CApath/private/cakey.pem -selfsign -extensions v3_ca -infiles $CApath/careq.pem");
 	system("$C_REHASH $CApath");
     }

@@ -199,7 +199,8 @@ int Socket::connect(URL *url) {
   AUTODEREF(SocketHelper *, sch);
   int ret = 0;
   Synchronized(this);
-  if (socket_use_socks) {
+  // We don't want to use tor for loopback connections.
+  if (socket_use_socks && url->hostname() != "localhost") {
     bool non_blocking = nonBlocking();
     sch = new SocketSocksHelper(this, url);
     HRNULL(sch);
@@ -224,6 +225,9 @@ int Socket::connect(URL *url) {
     HRNULL(sch);
     na->addWatcher(sch);
     connect_helper = sch;
+    if (na->isValid()) {
+      sch->signalReceived();
+    }
   }
   error_out:
     return ret;

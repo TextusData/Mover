@@ -292,7 +292,7 @@ void ProtoBufReader::read(InternalProtoBufReaderEvent *lre) {
   assert(!eof());
   read_thread = Thread::self();
   buffer = buffer + lre->data();
-  if (factory || fh->context()) {
+  if (fh && (factory || fh->context())) {
     while (true) {
       AUTODEREF(Message *, m);
       ProtoBufReaderStatus::status stat;

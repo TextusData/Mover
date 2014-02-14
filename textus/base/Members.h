@@ -37,6 +37,7 @@ prot:									\
  std::string name() { Synchronized(this); return name##_; }		\
  const std::string name() const { SynchronizedConst(this); return name##_; } \
  void set##name(std::string s) { Synchronized(this); name##_ = s; }	\
+ void set_##name(std::string s) { Synchronized(this); name##_ = s; }	\
 private:
 
 #define MINT(prot, name)						\
@@ -46,6 +47,17 @@ prot:									\
  int name() { Synchronized(this); return name##_; }			\
  int name() const { SynchronizedConst(this); return name##_; }		\
  void set##name(int s) { Synchronized(this); name##_ = s; }		\
+ void set_##name(int s) { Synchronized(this); name##_ = s; }		\
+private:
+
+#define MBOOL(prot, name)						\
+  private:								\
+  bool name##_;								\
+prot:									\
+ bool name() { Synchronized(this); return name##_; }			\
+ bool name() const { SynchronizedConst(this); return name##_; }		\
+ void set##name(bool s) { Synchronized(this); name##_ = s; }		\
+ void set_##name(bool s) { Synchronized(this); name##_ = s; }		\
 private:
  
 

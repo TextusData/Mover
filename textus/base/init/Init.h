@@ -166,6 +166,9 @@ public:
 
   int add_to_args(std::string s) {
     int ret = 0;
+    if (s == "") {
+      return ret;
+    }
   
     size_t c = s.find_first_of(",");
     while (c != std::string::npos) {

@@ -57,6 +57,9 @@ void Timer::timerStart(Duration time_out, TimerQueue *queue)
 
 void Timer::timerStop() {
   Synchronized(this);
+  if (tq == NULL ){
+    return;
+  }
   tq->removeTimer(this);
   tq = NULL;
 }

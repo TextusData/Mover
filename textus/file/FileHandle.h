@@ -163,6 +163,7 @@ public:
 	  }
 	}
       }
+      wakeMonitor();
     }
     return;
   }

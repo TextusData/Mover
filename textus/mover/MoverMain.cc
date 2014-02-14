@@ -25,6 +25,7 @@
 #include "textus/base/init/Init.h"
 #include "textus/network/ssl/SecureMessageServer.h"
 #include "textus/network/Socket.h"
+#include "textus/mover/MoverEncryption.h"
 
 
 using namespace textus::mover;
@@ -47,9 +48,21 @@ int main(int argc, const char *argv[], const char *envp[])
     exit (1);
   }
 
+  string config_path =
+    textus::system::Environment::getConfigPath("crypto.cfg");
+
+  if (MoverEncryption::fromConfigFile(config_path) != 0) {
+    fprintf (stderr, "Unable to read crypto.cfg file: %s\n",
+	     config_path.c_str());
+    exit (2);
+  }
+
 
   // If this is set, just upload files to localhost and bug out.
-  if (mover_upload_files.size() != 0 && mover_upload_files.front() != "") {
+  mover->bindCertificate(mover_certificate);
+  mv = new MoverVerifier();
+  mover->setverifier(mv);
+  if (mover_upload_files.size() != 0) {
     mover->uploadOnly();
     mover->uploadFiles(mover_upload_files);
     goto error_out;
@@ -57,9 +70,6 @@ int main(int argc, const char *argv[], const char *envp[])
 
   HRC(mover->attachFileStore(textus::mover::mover_root));
   mover->resetIHave();
-  mover->bindCertificate(mover_certificate);
-  mv = new MoverVerifier();
-  mover->setverifier(mv);
 
   // bind causes the cerver to go active.
   mover->bindServer(mover_bind_address);
