@@ -162,7 +162,6 @@ int Mover::attachFileStore(string root) {
 }
 
 int Mover::encryptRandom(string d, string *out) {
-  int ret = 0;
   //XXXXXX FixMe, these need to mimic the distribution of
   // real messages.
   int ret = 0;
