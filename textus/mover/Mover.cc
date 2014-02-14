@@ -120,6 +120,13 @@ void MoverTimerEvent::close() {
 
 Mover::Mover(): first_poll(true), mover_done(false), upload_only(false) {
   seen_cache.set_max_cached(mover_max_cache);
+  string config_path =
+    textus::system::Environment::getConfigPath("crypto.cfg");
+  
+  if (MoverEncryption::fromConfigFile(config_path)) {
+    LOG(WARNING) << "Unable to read crypto.cfg file.\n";
+  }
+
 }
 
 Mover::~Mover() {}
@@ -155,15 +162,19 @@ int Mover::attachFileStore(string root) {
 }
 
 int Mover::encryptRandom(string d, string *out) {
+  int ret = 0;
   //XXXXXX FixMe, these need to mimic the distribution of
   // real messages.
   static string methods[] = { string("gpg"), string("openssl") };
   int r = Random::rand(ARRAY_SIZE(methods));
   string method = methods[r];
-  MoverEncryption *me = MoverEncryption::findEncryption(method);
   AUTODEREF(KeyDescription *, keyname);
+  MoverEncryption *me = MoverEncryption::findEncryption(method);
+  HRNULL(me);
   keyname = me->tempKey();
-  return me->encrypt(keyname, d, out);
+  HRC(me->encrypt(keyname, d, out));
+ error_out:
+  return ret;
 }
 
 int Mover::bindServer(string bind_address) {

@@ -49,7 +49,7 @@ int main(int argc, const char *argv[], const char *envp[])
 
 
   // If this is set, just upload files to localhost and bug out.
-  if (mover_upload_files.size() != 0) {
+  if (mover_upload_files.size() != 0 && mover_upload_files.front() != "") {
     mover->uploadOnly();
     mover->uploadFiles(mover_upload_files);
     goto error_out;

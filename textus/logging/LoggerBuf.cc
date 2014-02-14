@@ -42,14 +42,14 @@
 namespace textus { namespace logging {
 using namespace std;
 
-DEFINE_BOOL_ARG(log_to_stderr, false, "log-to-stderr",  \
+DEFINE_BOOL_ARG(log_to_stderr, false, "log_to_stderr",  \
 "Enable logging to stderr instread of logging to a file.\n");
 
-DEFINE_STRING_ARG(log_time_format, "%F %T", "log-time-format", \
+DEFINE_STRING_ARG(log_time_format, "%F %T", "log_time_format", \
 "Default time format used for logging and anything else that " \
 "does a << struct timeval.");
 
-DEFINE_STRING_ARG(log_directory, "/data/logs", "log-directory", 	\
+DEFINE_STRING_ARG(log_directory, "/data/logs", "log_directory", 	\
 "Directory to write log files into.  If it does not exist, it will be " \
 		  "created with mkdir -p.");
 
