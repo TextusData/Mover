@@ -1,5 +1,5 @@
 /* SecureMessageServer.h -*- c++ -*-
- * Copyright (c) 2010, 2013 Ross Biro
+ * Copyright (c) 2010, 2013, 2014 Ross Biro
  *
  * Class for a simple message oriented server.
  *
@@ -59,8 +59,8 @@ public:
     return ServerSocket<T, SecureSocket, ProtoBufReader>::processor->coordinator();
   }
 
-  void setcoordinator(ServerCoordinator *c) {
-    ServerSocket<T, SecureSocket, ProtoBufReader>::processor->setcoordinator(c);
+  void set_coordinator(ServerCoordinator *c) {
+    ServerSocket<T, SecureSocket, ProtoBufReader>::processor->set_coordinator(c);
   }
 
   T *getProcessor() {
@@ -109,7 +109,7 @@ public:
       s->setCiphers(ciphers.c_str());
     }
 
-    s->setcoordinator(coordinator());
+    s->set_coordinator(coordinator());
     if (!useCertFile) {
       s->useCertificate(cert());
     }

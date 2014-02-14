@@ -47,7 +47,7 @@ private:
 
 protected:
   virtual int weakDelete() {
-    setcoordinator(NULL);
+    set_coordinator(NULL);
     return textus::event::EventTarget::weakDelete();
   }
 
@@ -65,7 +65,7 @@ public:
   }
 
   virtual void close() {
-    setcoordinator(NULL);
+    set_coordinator(NULL);
   }
 
   virtual void onConnect() { }
@@ -157,28 +157,42 @@ public:
 
   virtual void close() {
     {
-      Synchronized(this);
-      if (lr) {
-	lr->close();
-	lr = NULL;
+      AUTODEREF(T *, tmpp);
+      AUTODEREF(P *, tmpl);
+      AUTODEREF(watcher_type *, tmpw);
+    
+      {
+	Synchronized(this);
+	if (lr) {
+	  tmpl = lr;
+	  tmpl->ref();
+	  lr = NULL;
+	}
+	if (processor) {
+	  tmpp = processor;
+	  tmpp->ref();
+	  processor = NULL;
+	}
+	/* XXXXXX FXIME, should this be here and not in S? */
+	if (S::context()) {
+	  S::context()->close();
+	  S::setContext(NULL);
+	}
+	if (watcher != NULL) {
+	  tmpw = watcher;
+	  tmpw->ref();
+	  watcher = NULL;
+	}
       }
-      if (processor) {
-	AUTODEREF(T *, p);
-	p = processor;
-	p->ref();
-	processor = NULL;
-	p->close();
+      if (tmpp) {
+	tmpp->close();
       }
-      if (S::context()) {
-	S::context()->close();
-	S::setContext(NULL);
+      if (tmpl) {
+	tmpl->close();
       }
-      if (watcher != NULL) {
-	AUTODEREF(watcher_type *, w);
-	w = watcher;
-	w->ref();
-	watcher = NULL;
-	w->close();
+
+      if (tmpw) {
+	tmpw->close();
       }
     }
     S::close();

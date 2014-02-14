@@ -34,7 +34,7 @@ using namespace textus::file;
 
 DEFINE_LIST_ARG_TEST(string, sysrand_paths, "sysrand_paths",
 "The list of random number generator devices to use with sysrand.",
-		     "/dev/urandom", "/dev/random");
+		     "/dev/urandom", "/dev/urandom");
 
 void SysRand::openFiles() {
   Synchronized(this);

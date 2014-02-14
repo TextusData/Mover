@@ -51,8 +51,10 @@ Base::~Base()
 
 std::ostream& Base::doPrint(std::ostream &o) const
 {
-  // All we know about a base is that it's a base and it has an address.
-  o << toString();
+  if (this) {
+    // All we know about a base is that it's a base and it has an address.
+    o << toString();
+  }
   return o;
 }
 

@@ -66,8 +66,9 @@ public:
       addr = NetworkAddress::resolve(u->hostname());
       HRNULL(addr);
       addr->addWatcher(this);
-      eventReceived(NULL);
-      return;
+      if (!addr->isValid()) {
+	goto error_out;
+      }
     }
     signalReceived();
   error_out:;
@@ -109,10 +110,10 @@ public:
       
     sock = NULL;
 
-    // makesure that ls get's reffed/dereffed the right number of times.
     if (port != 0) {
       na->setPort(htons(port));
     }
+
     sock = new ListeningSocket(na);
     bound = true;
     signal();

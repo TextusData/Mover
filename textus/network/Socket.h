@@ -114,14 +114,14 @@ public:
   }
 
   // needed by socket helpers.
-  void watchRead() {
+  virtual void watchRead() {
     Synchronized(this); 
     watch_write = false;
     watch_read = true;
     wakeMonitor();
   }
 
-  void watchWrite() {
+  virtual void watchWrite() {
     Synchronized(this); 
     watch_write = true;
     watch_read = false;

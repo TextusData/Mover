@@ -1,5 +1,5 @@
 /* MoverMessageProcssor.h -*- c++ -*-
- * Copyright (c) 2013 Ross Biro
+ * Copyright (c) 2013, 2014 Ross Biro
  *
  */
 
@@ -74,6 +74,7 @@ private:
   Time first_message;
   int connection_timeout;
   int max_connection_time;
+  MBOOL(protected, need_startup);
 
 protected:
   class Mover *mover() {
@@ -151,8 +152,32 @@ public:
   void onConnect() {
     LOG(INFO) << "Mover accepted connection from: " << parent->getPeerAddress() 
 	      << "\n";
+    // This will usually get called in the FileHandle thread.  We need
+    // to make sure we switch threads.
+    Synchronized(this);
+    set_need_startup(true);
+    if (timer) {
+      timer->close();
+      timer = NULL;
+    }
+    AUTODEREF(MMPTimerEvent *, te);
+    te = new MMPTimerEvent(Duration::seconds(0), this);
+    if (te == NULL) {
+      LOG(ERROR) << "MMPTimerEvent: Unable to create startup timer.";
+      sendGoodBye();
+    }
+    timer = te;
+    
+  }
+
+  void afterConnect() {
     string have;
+    if (mover() == NULL) {
+      return;
+    }
+
     int r = Random::rand(4);
+
     switch (r) {
     case 0:
       sendRandom();
@@ -250,6 +275,13 @@ public:
 
   void timeOut() {
     Synchronized(this);
+    if (need_startup()) {
+      // need to prime the pump.
+      set_need_startup(false);
+      afterConnect();
+      return;
+    }
+
     if (last_message.elapsedTime() > connection_timeout ||
 	first_message.elapsedTime() > max_connection_time) {
       sendGoodBye();

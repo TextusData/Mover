@@ -1,5 +1,5 @@
 /* MoverMessageProcssor.cc -*- c++ -*-
- * Copyright (c) 2013 Ross Biro
+ * Copyright (c) 2013, 2014 Ross Biro
  *
  */
 
@@ -32,11 +32,19 @@ MMPTimerEvent::~MMPTimerEvent() {
 }
 
 void MMPTimerEvent::timeOut() {
-  Synchronized(this);
-  if (mmp() != NULL) {
-    mmp()->timeOut();
+  AUTODEREF(MoverMessageProcessor *, m);
+  m = NULL;
+  {
+    Synchronized(this);
+    if (mmp() != NULL) {
+      m = mmp();
+      m->ref();
+    }
+    close();
   }
-  close();
+  if (m != NULL) {
+    m->timeOut();
+  }
   textus::event::TimerEvent::timeOut();
 }
 
@@ -52,7 +60,8 @@ void MMPTimerEvent::close() {
 MoverMessageProcessor::MoverMessageProcessor(SecureMessageServer<MoverMessageProcessor> *p):parent(p),
 											    hello_count(0),
 											    waiting_for_messages(true),
-											    sending_messages(true) 
+											    sending_messages(true) ,
+											    need_startup_(false)
 {
   last_message = Time::now();
   first_message = Time::now();

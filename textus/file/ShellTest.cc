@@ -31,7 +31,7 @@
 #include "textus/logging/Log.h"
 
 using namespace textus::testing;
-using namespace textus::file;
+using namespace textus::file;o
 
 namespace textus { namespace file {
 
