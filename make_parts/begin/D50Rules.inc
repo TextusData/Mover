@@ -26,7 +26,7 @@ define make-depend
 endef
 
 define run_tests
-       $(if $(filter-out %.deps dependencies, $1), echo running $1 && export LD_LIBRARY_PATH=$(LIB_PATHS) && textus/scripts/runtest $(if $(timeallowed_$1), --timeallowed=$(timeallowed_$1)) -- "$1",)
+       $(if $(filter-out %.deps dependencies, $1), echo running $1 && export LD_LIBRARY_PATH=$(LIB_PATHS) && textus/scripts/runtest $(if $(timeallowed_$1), --timeallowed=$(timeallowed_$1)) -- "$1";,)
 endef
 
 define run_all_tests

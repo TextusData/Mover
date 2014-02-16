@@ -1,5 +1,5 @@
 /* WorkerThread.h -*- c++ -*-
- * Copyright (c) 2010-2012 Ross Biro
+ * Copyright (c) 2010-2012, 2014 Ross Biro
  *
  * Handle worker threads.  Mostly these
  * Threads wait on event queues, and then
@@ -44,6 +44,7 @@ protected:
 
 public:
   static textus::event::RoundRobinEventQueueScheduler *workerThreadScheduler();
+  static Thread *getFirst();
 
   WorkerThread(): EventQueueThread(workerThreadScheduler()) { }
   virtual ~WorkerThread() { }

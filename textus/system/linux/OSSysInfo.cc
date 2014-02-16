@@ -34,6 +34,7 @@
 #include "textus/file/FileHandle.h"
 #include "textus/file/TextusFile.h"
 #include "textus/file/LineReader.h"
+#include "textus/threads/WorkerThread.h"
 
 namespace textus { namespace system {
 
@@ -43,7 +44,9 @@ DEFINE_STRING_ARG(linux_random_device, "/dev/random", "linux_random_device", "Th
 
 static set<string> cpu_flags;
 
+
 bool SysInfo::getCPUFlag(std::string f) {
+  getNumCPUs(); // need to make sure the flags are already set.
   return cpu_flags.count(f) != 0;
 }
 
@@ -66,6 +69,16 @@ void saveSystemFlags(string flags) {
 }
 
 int SysInfo::getNumCPUs() {
+  static int num_cpus = -1;
+  static textus::base::Base lock;
+  Synchronized(&lock);
+  if (num_cpus > 0) {
+    return num_cpus;
+  }
+
+  // Make sure we have at least one worker thread.
+  textus::threads::WorkerThread::getFirst();
+
   AUTODEREF(textus::file::FileHandle *, fh);
   fh = dynamic_cast<textus::file::FileHandle *>(textus::file::TextusFile::openFile ("/proc/cpuinfo", O_RDONLY));
   AUTODEREF(textus::file::LineReader *, lr);
@@ -83,7 +96,8 @@ int SysInfo::getNumCPUs() {
       }
     }
   }
-  return cpu_count;
+  num_cpus = cpu_count;
+  return num_cpus;
 }
 
 std::string SysInfo::getAppPath() {

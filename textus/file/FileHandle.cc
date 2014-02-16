@@ -294,7 +294,8 @@ Base *FileHandle::threadMonitor(Base *arg)
   return NULL;
 }
 
-INITTHREAD(FileHandle::threadMonitor, NULL);
+// Need this early so we can do file i/o
+INITTHREAD_PRIORITY(FileHandle::threadMonitor, NULL, THREAD_INIT_PRIORITY + 1);
 SHUTDOWNTHREAD(shutdownMonitor);
 
 void FileHandle::init() {

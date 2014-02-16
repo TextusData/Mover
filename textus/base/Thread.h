@@ -1,5 +1,5 @@
 /* Thread.h -*- c++ -*-
- * Copyright (c) 2009-2013 Ross Biro
+ * Copyright (c) 2009-2014 Ross Biro
  *
  * Encapsulate the idea of a thread.
  */
@@ -374,9 +374,11 @@ bool threadWaiting( Mutex *m);
 #define AUXILLARY_THREAD_INIT_PRIORITY 1000
 #define AUXILLARY_THREAD_SHUTDOWN_PRIORITY 1000
 
-#define INITTHREAD(startup, arg)					\
-  DEFINE_INIT_FUNCTION(UNIQUE_IDENTIFIER(InitThread),			\
-		       AUXILLARY_THREAD_INIT_PRIORITY) {		\
+#define INITTHREAD(startup, arg) INITTHREAD_PRIORITY(startup, arg,	\
+					     AUXILLARY_THREAD_INIT_PRIORITY)
+
+#define INITTHREAD_PRIORITY(startup, arg, priority)			\
+  DEFINE_INIT_FUNCTION(UNIQUE_IDENTIFIER(InitThread), priority) {	\
     Thread *th = new Thread(startup, arg);				\
     if (th != NULL) {							\
       th->deref();							\

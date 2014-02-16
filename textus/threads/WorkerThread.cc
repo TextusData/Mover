@@ -1,5 +1,5 @@
 /* WorkerThread.cc -*- c++ -*-
- * Copyright (c) 2010-2012 Ross Biro
+ * Copyright (c) 2010-2012, 2014 Ross Biro
  *
  * Handle worker threads.  Mostly these
  * Threads wait on event queues, and then
@@ -40,12 +40,23 @@ textus::event::RoundRobinEventQueueScheduler *WorkerThread::workerThreadSchedule
 DEFINE_INT_ARG(worker_thread_count, -1, "worker_thread_count", "Number of worker threads to fire up.  Defaults to number of cpus.");
 static Thread **worker_thread_array;
 
+Thread *WorkerThread::getFirst() {
+  // Don't need to worry about derefing this.
+  // the copy in the thread array takes care of it.
+  static Thread *ft = NULL;
+  static Base lock;
+  Synchronized(&lock);
+  if (ft != NULL) {
+    return ft;
+  }
+  ft = new WorkerThread();
+  return ft;
+}
+
 DEFINE_INIT_FUNCTION(workerThreadStartup, AUXILLARY_THREAD_INIT_PRIORITY + 1) {
   Thread *first_thread;
-  if (worker_thread_count != 0) {
-    // Fire up one first so that getNUMCPUs will work.
-    first_thread = new WorkerThread();
-  }
+
+  first_thread  = WorkerThread::getFirst();
 
   if (worker_thread_count < 0) {
     worker_thread_count = textus::system::SysInfo::systemInformation()->getNumCPUs();
@@ -63,7 +74,8 @@ DEFINE_INIT_FUNCTION(workerThreadStartup, AUXILLARY_THREAD_INIT_PRIORITY + 1) {
   return 0;
 }
 
-DEFINE_SHUTDOWN_FUNCTION(workerThreadShutdown, AUXILLARY_THREAD_INIT_PRIORITY + 1) {
+DEFINE_SHUTDOWN_FUNCTION(workerThreadShutdown, 
+			 AUXILLARY_THREAD_SHUTDOWN_PRIORITY + 1) {
   WorkerThread::workerThreadScheduler()->shutdown();
   for (int i = 0; i < worker_thread_count; i++) {
     worker_thread_array[i]->join();
