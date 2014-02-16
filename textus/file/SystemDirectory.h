@@ -81,6 +81,10 @@ public:
     return true;
   }
 
+  virtual string pathName() {
+    return pth;
+  }
+
   virtual bool rewind() {
     Synchronized(this);
     done = false;

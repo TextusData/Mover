@@ -107,7 +107,6 @@ int LoggerBuf::rotate()
   lines_since_last_rotate = 0;
 
   if (log_to_stderr) {
-    parent = NULL;
     output_stream = &std::cerr;
     return 0;
   } 
@@ -164,7 +163,7 @@ string LoggerBuf::writeString(string str)
 {
   Synchronized(&syncObject);
 
-  if (parent) {
+  if (parent && output_stream != &std::cerr) {
     parent->writeString(str);
   }
 
@@ -206,6 +205,5 @@ streamsize LoggerBuf::xsputn(const char *s, streamsize n)
   }
   return ret;
 }
-
 
 }} // namespace

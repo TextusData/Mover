@@ -99,8 +99,9 @@ private:
   static map<string, initializer *> &argument_map();
 
 public:
-  static int processArguments(list<string *> *args);
+  static int processOneArgString(string arg);
   static int processOneArgument(string arg, string value);
+  static int processArguments(list<string *> *args);
   static int parseOptionsFile(string path, bool ignore_missing = false);
   static void usage();
   static void clear();
@@ -144,8 +145,8 @@ const textus::file::Directory &getAppDir();
 
 typedef map<string, string> env_map;
 const env_map &initEnvironment();
-string getConfigPath(string file);
-string getDataPath(string file);
+string getConfigPath(const string file);
+string getDataPath(const string file);
 
 void TextusInit(int argc, const char *argv[], const char *envp[]);
 void TextusShutdown();

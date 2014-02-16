@@ -1,5 +1,5 @@
 /* SystemFile.cc -*- c++ -*-
- * Copyright (c) 2009=2014 Ross Biro
+ * Copyright (c) 2009, 2014=2014 Ross Biro
  *
  * Represents a system file.
  *
@@ -26,6 +26,7 @@
 
 #include "textus/file/TextusFile.h"
 #include "textus/file/SystemFile.h"
+#include "textus/base/init/Init.h"
 
 #define MAX_ITERATOR_READ 16384
 
@@ -48,6 +49,21 @@ TextusFile *TextusFile::openWithPath(const string path, const string name,
   } else {
     return openFile(name, acces, md);
   }
+}
+
+TextusFile *TextusFile::openConfigFile(const string name, int acess, int md)
+{
+  if (name[0] == FILE_SEP_CHAR) {
+    return openFile(name, acess, md);
+  }
+  return openFile(textus::base::init::getConfigPath(name), acess, md);
+}
+
+TextusFile *TextusFile::openDataFile(const string name, int acess, int md) {
+  if (name[0] == FILE_SEP_CHAR) {
+    return openFile(name, acess, md);
+  }
+  return openFile(textus::base::init::getDataPath(name), acess, md);
 }
 
 TextusFile *TextusFile::openFileSearchPath(const list<string> paths,

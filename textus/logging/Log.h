@@ -32,6 +32,7 @@
 
 #include <ostream>
 #include <string>
+#include <list>
 
 // These need to go up here because we use them in a lot of the includes.
 namespace textus { namespace logging {
@@ -46,7 +47,6 @@ private:
 public:
   static const long max_log_file_size = 40*1024*1024;
   static const long max_log_file_lines = 100000;
-
   FileLogger(const char *);
   ~FileLogger();
 

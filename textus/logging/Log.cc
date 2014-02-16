@@ -1,5 +1,5 @@
 /* Log.cc -*- c++ -*-
- * Copyright (c) 2009 Ross Biro
+ * Copyright (c) 2009, 2014 Ross Biro
  *
  * Routines to facilitate logging.
  *
@@ -35,6 +35,14 @@ FileLogger Log_DEBUG("DEBUG");
 FileLogger Log_INFO("INFO");
 FileLogger Log_WARNING("WARNING");
 FileLogger Log_ERROR("ERROR");
+
+static FileLogger *loggers[] = {
+  &Log_DEBUG,
+  &Log_INFO,
+  &Log_WARNING,
+  &Log_ERROR,
+  NULL
+};
 
 void log_call_stack(FileLogger &log, const char *file, int line) 
 {
@@ -123,5 +131,17 @@ int FileLogger::rotate()
   }
   return -1;
 }
+
+
+// This will get called after all of the command line and config file
+// arguments are processed.  We just reset everything incase something
+// important changed.
+DEFINE_INIT_FUNCTION(reset, EARLY_INIT_PRIORITY) {
+  for (int i = 0; loggers[i] != NULL; ++i) {
+    loggers[i]->rotate();
+  }
+  return 0;
+}
+
 
 }} //namespace

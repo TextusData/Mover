@@ -78,6 +78,7 @@ public:
   virtual bool recursiveUnlink();
   virtual FileHandle *open() { return NULL; }
   virtual Directory *newDirectory(string name, int mod=0755) = 0;
+  virtual string pathName()=0;
 };
 
 class DirectoryEntry: virtual public Base {

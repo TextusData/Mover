@@ -206,7 +206,7 @@ int Mover::bindServer(string bind_address) {
 
   ss()->setAddress(url());
 
-  ss()->waitForBind();
+  HRC(ss()->waitForBind());
 
  error_out:
   return ret;
@@ -400,12 +400,12 @@ void Mover::storeData(string data) {
   }
   if (have_file() == NULL) {
     AUTODEREF( TextusFile *, tf);
-    tf = TextusFile::openFile(mover_have_file_name, O_WRONLY);
+    tf = TextusFile::openDataFile(mover_have_file_name, O_WRONLY|O_CREAT);
     HRNULL(tf);
-    HRC(tf->seek(0, SEEK_END));
+    HRTRUE(tf->seek(0, SEEK_END) >= 0);
     set_have_file(tf);
   }
-  HRC(have_file()->write(h + "\n"));
+  HRTRUE(have_file()->write(h + "\n") == (int)h.length() + 1);
   HRC(have_file()->sync());
   HRC(file_store()->newData(data));
   seen_cache[data] = 1;
@@ -484,7 +484,7 @@ void Mover::handleExtension(MoverMessageProcessor *mmp, string data) {
 }
 
 SecureMessageServer<MoverMessageProcessor> *Mover::connectToPeer(string peer) {
-  AUTODEREF(SecureMessageServer<MoverMessageProcessor> *, ss);
+  SecureMessageServer<MoverMessageProcessor> *ss=NULL;
   AUTODEREF(SocketEventFactory *, sef);
   AUTODEREF(URL *, url);
   int ret;
@@ -506,6 +506,9 @@ SecureMessageServer<MoverMessageProcessor> *Mover::connectToPeer(string peer) {
   if (!ret) {
     return ss;
   } else {
+    if (ss) {
+      ss->deref();
+    }
     return NULL;
   }
 }
@@ -517,7 +520,7 @@ void Mover::pollPeers() {
   // XXXXXX FXIME:  Is reseting this here revealing too much information?
   resetIHave(); // We will randomly change what we are willing to tell people we have whenever we poll.
 
-  fh = TextusFile::openFile(mover_peers_file, O_RDONLY);
+  fh = TextusFile::openConfigFile(mover_peers_file, O_RDONLY);
   
   int range = mover_max_peers_connect - mover_min_peers_connect;
   int count = Random::rand(range) + mover_min_peers_connect;
@@ -581,17 +584,20 @@ void Mover::waitForShutdown() {
 }
 
 int Mover::uploadFiles(list<string> files) {
+  int ret = 0;
   int count = 0;
   AUTODEREF(SecureMessageServer<MoverMessageProcessor> *, ss);
   AUTODEREF(MoverMessageProcessor *, mmp);
   ss = connectToPeer(mover_bind_address);
-  ss->waitForConnect();
+  HRC(ss->waitForConnect());
   mmp = ss->getProcessor();
+  HRNULL(mmp);
   mmp->ref();
   for (list<string>::iterator i = files.begin(); i != files.end(); ++i) {
     AUTODEREF(TextusFile *, tf);
     tf = TextusFile::openFile(*i, O_RDONLY);
     if (tf == NULL) {
+      LOG(INFO) << "Unable to open file " << *i << "\n";
       continue;
     }
     string data = tf->read(mover_max_data_size);
@@ -604,18 +610,28 @@ int Mover::uploadFiles(list<string> files) {
     Synchronized(mmp);
     mmp->sendGoodBye();
   }
-  return count;
+
+ error_out:
+  if (ret == 0) {
+    return count;
+  }
+  return -1;
 }
 
 int Mover::uploadData(string data) {
   int ret = 0;
+  MoverMessageProcessor *mmp = NULL;
   AUTODEREF(SecureMessageServer<MoverMessageProcessor> *, ss);
   ss = connectToPeer(mover_bind_address);
-  ss->waitForConnect();
-  MoverMessageProcessor *mmp = ss->getProcessor();
-  Synchronized(mmp);
-  mmp->sendMessage(data);
-  mmp->sendGoodBye();
+  HRC(ss->waitForConnect());
+  mmp = ss->getProcessor();
+  HRNULL(mmp);
+  {
+    Synchronized(mmp);
+    mmp->sendMessage(data);
+    mmp->sendGoodBye();
+  }
+ error_out:
   return ret;
 }
 

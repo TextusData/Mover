@@ -85,6 +85,9 @@ public:
   static TextusFile *openFileSearchPath(const list<string> paths,
 					const string name, int acces,
 					int mode = 0600);
+  static TextusFile *openConfigFile(const string name, int access, int mode=0660);
+  static TextusFile *openDataFile(const string name, int access, int mode=0660);
+
   static bool exists(string name);
   static string pathJoin(const string p1, const string p2);
 

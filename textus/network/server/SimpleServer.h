@@ -1,5 +1,5 @@
 /* SimpleServer.h -*- c++ -*-
- * Copyright (c) 2009-2010, 2013 Ross Biro
+ * Copyright (c) 2009-2010, 2013, 2014 Ross Biro
  *
  * Base class of most servers in the system.
  *
@@ -77,11 +77,16 @@ public:
     }
   }
 
-  void waitForBind() {
+  int waitForBind() {
     Synchronized(this);
     while (!bound) {
       wait();
     }
+    if (sock == NULL) {
+      /* failed to bind. */
+      return -1;
+    }
+    return 0;
   }
 
   void addressResolved() {

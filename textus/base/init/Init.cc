@@ -36,7 +36,6 @@
 #include "textus/util/Hex.h"
 #include "textus/config/Config.h"
 
-
 namespace textus { namespace base { namespace init {
 
 #define MAX_PROTOBUF_ARG_SIZE 65536
@@ -103,6 +102,16 @@ void InitializerAppender::clear() {
 
 void TextusInit(int argc, const char *argv[], const char *envp[])
 {
+  // Need to handle logging options upfront, otherwise things
+  // get messed up.
+  for (int i = 1; i < argc; ++i) {
+    if (strcmp(argv[i], "--") == 0) {
+      break;
+    }
+    if (strncmp(argv[i], "--log", 5) == 0) {
+      ArgumentAppender::processOneArgString(argv[i]);
+    }
+  }
 
   // argv[0] is the prgram name, sometimes it has a complete path,
   // sometimes it does not.
@@ -174,7 +183,7 @@ void TextusInit(int argc, const char *argv[], const char *envp[])
     }
   }
 
-  if (ArgumentAppender::parseOptionsFile(app_dir+"/options.def", true)) {
+  if (ArgumentAppender::parseOptionsFile(getConfigPath("options.def"), true)) {
     exit(1);
   }
 
@@ -355,6 +364,29 @@ int ArgumentAppender::processOneArgument(string arg, string rest_arg) {
   return 0;
 }
 
+int ArgumentAppender::processOneArgString(string full_arg) {
+  int ret = 0;
+  string arg;
+  string rest_arg;
+  string::size_type equals = full_arg.find('=');
+  if (equals == string::npos) {
+    arg = full_arg.substr(2);
+    rest_arg = "";
+  } else {
+    arg = full_arg.substr(2, equals-2);
+    rest_arg = full_arg.substr(equals + 1);
+  }
+
+  HRC(processOneArgument(arg, rest_arg));
+
+ error_out:
+  if (ret != 0) {
+    usage();
+  }
+  return ret;
+
+}
+
 
 int ArgumentAppender::processArguments(list<string *> *args)
 {
@@ -373,22 +405,7 @@ int ArgumentAppender::processArguments(list<string *> *args)
       // it's --, we are done.
       return 0;
     }
-
-    string arg;
-    string rest_arg;
-    string::size_type equals = full_arg.find('=');
-    if (equals == string::npos) {
-      arg = full_arg.substr(2);
-      rest_arg = "";
-    } else {
-      arg = full_arg.substr(2, equals-2);
-      rest_arg = full_arg.substr(equals + 1);
-    }
-
-    if (processOneArgument(arg, rest_arg)) {
-      usage();
-      return 1;
-    }
+    processOneArgString(full_arg);
 
   }
   return 0;
@@ -532,6 +549,17 @@ int converter_double(const string &s, void *v)
   return 0;
 }
 
+string getConfigPath(const string file) {
+  using namespace textus::file;
+  return TextusFile::pathJoin(TextusFile::pathJoin(app_directory->pathName(), 
+						   "config"), file);
+}
+
+string getDataPath(const string file) {
+  using namespace textus::file;
+  return TextusFile::pathJoin(TextusFile::pathJoin(app_directory->pathName(), 
+						   "data"), file);
+}
 
 
 }}};

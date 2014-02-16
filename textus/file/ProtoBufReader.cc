@@ -118,6 +118,7 @@ public:
     InternalProtoBufReaderEvent *e;
     e = new InternalProtoBufReaderEvent(parent);
     e->setError(err);
+    LOG(INFO) << "InternalProtoBufReaderEventFactory error\n";
     setEventQueue(e);
     return e;
   }
@@ -126,8 +127,9 @@ public:
     Synchronized(this);
     InternalProtoBufReaderEvent *e;
     e = new InternalProtoBufReaderEvent(parent);
-    setEventQueue(e);
+    LOG(INFO) << "InternalProtoBufReaderEventFactory write\n";
     e->setWrite(true);
+    setEventQueue(e);
     return e;
   }
 
@@ -136,6 +138,7 @@ public:
     InternalProtoBufReaderEvent *e;
     e = new InternalProtoBufReaderEvent(parent);
     e->setData(s);
+    LOG(INFO) << "InternalProtoBufReaderEventFactory read\n";
     setEventQueue(e);
     return e;
   } 
@@ -145,6 +148,7 @@ public:
     InternalProtoBufReaderEvent *e;
     e = new InternalProtoBufReaderEvent(parent);
     e->setEof(true);
+    LOG(INFO) << "InternalProtoBufReaderEventFactory eof\n";
     setEventQueue(e);
     return e;
   }
