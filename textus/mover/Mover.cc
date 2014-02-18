@@ -61,6 +61,9 @@ DEFINE_STRING_ARG(mover_certificate, "", "mover_certificate",
 DEFINE_STRING_ARG(mover_root, "/data/mover", "mover_root", "the root directory for the mover file store.");
 DEFINE_STRING_ARG(mover_user_root, "$(HOME)/.mover", "mover_user_root", "The directory for the per user configuration and data files.");
 DEFINE_STRING_ARG(mover_have_file_name, "seen", "mover_have_file", "The file that keeps track of all the hashes we have seen.");
+DEFINE_STRING_ARG(mover_crypto_config, "crypto.cfg", "mover_crypto_config",
+		  "The name of of the file that contains information about "
+		  "the external encryptions available to us.");
 DEFINE_INT_ARG(mover_max_cache, 1000, "mover_max_cache", "The maximum size to let the cache of seen hashes grow to.");
 DEFINE_INT_ARG(mover_max_hello_count, 5, "mover_max_hello_count",
 	       "The maximum number of times we might accept a hello message from a given connection.");

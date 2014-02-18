@@ -43,15 +43,35 @@ int MoverEncryption::registerEncryption(string name, MoverEncryption *me) {
   return 0;
 }
 
+int MoverEncryption::fromConfigFile(TextusFile *tf) {
+  AUTODEREF(Config *, cfg);
+  int ret = 0;
+  cfg = new Config();
+  HRNULL(cfg);
+  HRC(cfg->readFile(tf));
+  HRC(fromConfig(cfg));
+
+ error_out:
+  return ret;
+}
+
 int MoverEncryption::fromConfigFile(string name) {
   AUTODEREF(Config *, cfg);
   int ret = 0;
-  ConfigData::map_iterator i;
-  ConfigData *cd=NULL;
 
   cfg = new Config();
   HRNULL(cfg);
   HRC(cfg->readFile(name));
+  HRC(fromConfig(cfg));
+
+ error_out:
+  return ret;
+}
+
+int MoverEncryption::fromConfig(Config *cfg) {
+  int ret = 0;
+  ConfigData::map_iterator i;
+  ConfigData *cd=NULL;
 
   cd = cfg->root();
   for (i = cd->asMap().begin(); i != cd->asMap().end(); ++i) {

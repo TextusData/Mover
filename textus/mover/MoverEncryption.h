@@ -1,5 +1,5 @@
 /* MoverEncryption.h -*- c++ -*-
- * Copyright (c) 2013 Ross Biro
+ * Copyright (c) 2013, 2014 Ross Biro
  *
  */
 
@@ -30,6 +30,7 @@
 #include "textus/base/Base.h"
 #include "textus/base/ReferenceValueMap.h"
 #include "textus/mover/KeyDescription.h"
+#include "textus/config/Config.h"
 
 namespace textus { namespace mover {
 
@@ -50,6 +51,8 @@ public:
   static int fromConfigFile(string name); // put this here so it
 					  // forces ExternalEncryption
 					  // to get linked in.
+  static int fromConfigFile(textus::file::TextusFile *tf);
+  static int fromConfig(textus::config::Config *cfg);
   static iterator begin() { return encryptions.begin(); }
   static iterator end() { return encryptions.end(); }
 

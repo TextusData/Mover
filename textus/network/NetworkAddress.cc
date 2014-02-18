@@ -638,12 +638,11 @@ const char *Resolver::eatQuery(const char *base, const char *cptr, size_t length
 }
 
 
-/* XXXXXXXXXXXXX FIXME: BUG BUG BUG bounds checking missing!!! BUG BUG BUG XXXXXXXXXXXXXXXXXXX */
 const char *Resolver::processAnswer(const char *base, const char *cptr, size_t length)
 {
   string name;
   const char *next = NULL;
-  while (*cptr != 0) {
+  while (*cptr != 0 && cptr < base + length) {
     if((*cptr & 0xC0) == 0xC0) {
       cptr++;
       if (next == NULL)
@@ -655,11 +654,19 @@ const char *Resolver::processAnswer(const char *base, const char *cptr, size_t l
     if (name.length() > 0) {
       name = name + ".";
     }
+    if (*cptr + 1 + cptr > base + length) {
+      break;
+    }
     name = name + string(cptr+1, *cptr);
     cptr = cptr + *cptr + 1;
   }
+
   if (next == NULL) 
     next = cptr;
+
+  if (next + 7 > base + length) {
+    return NULL;
+  }
 
   cptr = next + 1;
   uint16_t type = *cptr++ << 8;
@@ -674,6 +681,10 @@ const char *Resolver::processAnswer(const char *base, const char *cptr, size_t l
   rdlen |= *cptr ++;
   const char *rdata = cptr;
   cptr += rdlen;
+  if (cptr > base + length) {
+    return NULL;
+  }
+
   if (type == A && cls == IN) {
     string a(rdata, rdlen);
     addAddress4(a, ttl);

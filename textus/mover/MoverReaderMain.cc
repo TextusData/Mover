@@ -70,7 +70,7 @@ int main(int argc, const char *argv[], const char *envp[]) {
     cd = cf->root();
     HRC(cd->getStringByName("next_read", &value));
     pos = atoll(value.c_str());
-    seen_file = TextusFile::openFile(mover_have_file_name, O_RDONLY);
+    seen_file = TextusFile::openDataFile(mover_have_file_name, O_RDONLY);
     HRNULL(seen_file);
     HRTRUE(seen_file->seek(pos, SEEK_SET) == pos);
 

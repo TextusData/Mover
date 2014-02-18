@@ -31,6 +31,8 @@
 #include "textus/mover/MoverEncryption.h"
 #include "textus/system/Environment.h"
 #include "textus/file/Directory.h"
+#include "textus/mover/MoverMessageProcessor.h"
+#include "textus/mover/Mover.h"
 
 using namespace textus::testing;
 using namespace textus::mover;
@@ -53,7 +55,7 @@ MoverEncryptionTest::MoverEncryptionTest(): UnitTest(__FILE__)
   fprintf(stderr, "Testing Loading of ExternalEncryptions...");
   getDataDir();
   string config_path =
-    textus::system::Environment::getConfigPath("crypto.cfg");
+    textus::system::Environment::getConfigPath(mover_crypto_config);
   
   assert(MoverEncryption::fromConfigFile(config_path) == 0);
   fprintf(stderr, "ok.\n");

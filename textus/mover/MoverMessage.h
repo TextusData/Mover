@@ -85,8 +85,6 @@ public:
     Synchronized(this);
     string d;
     string r = Random::data(mover_random_data_min, mover_random_data_max);
-    // XXXXX FIXME  For debugging only.
-    r = string("");
 
     d.reserve(4 * sizeof(uint32_t) + data.length() + r.length() + 8);
       

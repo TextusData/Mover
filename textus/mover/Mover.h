@@ -1,5 +1,5 @@
 /* Mover.h -*- c++ -*-
- * Copyright (c) 2013 Ross Biro
+ * Copyright (c) 2013, 2014 Ross Biro
  *
  * Main class for an app that copies chunks of data around.
  * In general, those chunks will be encrypted messages.
@@ -72,6 +72,7 @@ DECLARE_INT_ARG(mover_max_connection_time);
 DECLARE_INT_ARG(mover_min_connection_time);
 DECLARE_INT_ARG(mover_connection_timeout);
 DECLARE_INT_ARG(mover_random_message_time);
+DECLARE_STRING_ARG(mover_crypto_config);
 
 class Mover: virtual public ServerCoordinator {
 private:

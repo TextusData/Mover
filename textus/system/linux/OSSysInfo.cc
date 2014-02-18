@@ -40,7 +40,8 @@ namespace textus { namespace system {
 
 using namespace std;
 
-DEFINE_STRING_ARG(linux_random_device, "/dev/random", "linux_random_device", "The device used to get random numbers. (see also mixer.)");
+// XXXXXX FIXME: switch this back to /dev/random before production.
+DEFINE_STRING_ARG(linux_random_device, "/dev/urandom", "linux_random_device", "The device used to get random numbers. (see also mixer.)");
 
 static set<string> cpu_flags;
 
@@ -104,18 +105,29 @@ std::string SysInfo::getAppPath() {
   return string("");
 }
 
-void SysInfo::random(unsigned char *buff, unsigned len) {
+void SysInfo::random(unsigned char *obuff, unsigned len) {
   EXEC_BARRIER();
-  // XXXXX FIXME: cache the file handle, we will likely need it alot.
   // XXXXX FIXME: we also need to cache some random data and 
   //              put some noise into the reads.  We want to
   //              avoid giving something away by our pattern of
   //              reading /dev/random.
-  // XXXXXX FIXME: switch this back to /dev/random before production.
-  int fd = open(linux_random_device.c_str(), O_RDONLY); 
+  unsigned char *ibuff = static_cast<unsigned char *>(alloca(len));
+  static int fd=-1;
+  static textus::base::Base lock;
+  {
+    Synchronized(&lock);
+    if (fd < 0) {
+      fd = open(linux_random_device.c_str(), O_RDONLY); 
+    }
+  }
   if (fd >= 0) {
-    read (fd, buff, len);
-    close(fd);
+    read (fd, ibuff, len);
+  } else {
+    LOG(ERROR) << "Unable to open random device.\n";
+    die();
+  }
+  for (unsigned i = 0; i < len; i++) {
+    obuff[i] ^= ibuff[i];
   }
 }
 

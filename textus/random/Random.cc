@@ -57,9 +57,6 @@ void Random::randomize_buffer(unsigned char *buff, size_t len) {
   textus::system::SysInfo::systemInformation()->random(buff, len);
   if (prng != NULL) {
     for (size_t i = 0; i < len; ++i) {
-      if (i == 512) {
-	LOG(DEBUG) << "512 breakpoint.\n";
-      }
       buff[i] ^= prng->rand8();
     }
   }

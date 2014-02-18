@@ -48,10 +48,14 @@ int main(int argc, const char *argv[], const char *envp[])
     exit (1);
   }
 
-  string config_path =
-    textus::system::Environment::getConfigPath("crypto.cfg");
+  string config_path = mover_crypto_config;
+  TextusFile *tf = TextusFile::openConfigFile(config_path, O_RDONLY);
+  if (tf == NULL) {
+    fprintf (stderr, "Unable to open crypto.cfg: %s\n", config_path.c_str());
+    exit (3);
+  }
 
-  if (MoverEncryption::fromConfigFile(config_path) != 0) {
+  if (MoverEncryption::fromConfigFile(tf) != 0) {
     fprintf (stderr, "Unable to read crypto.cfg file: %s\n",
 	     config_path.c_str());
     exit (2);
