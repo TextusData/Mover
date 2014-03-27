@@ -35,6 +35,7 @@ using namespace std;
 using namespace textus::base;
 
 class MoverEncryption;
+class KeyBook;
 
 class KeyDescription: virtual public Base {
 private:
@@ -53,12 +54,13 @@ public:
   }
 
   int addToConfigData(textus::config::ConfigData *cd);
+  void setVariables();
 
   size_t count(string s) const { return attributes.count(s); }
   void set(string key, string value) { attributes[key] = value; }
   string at(string key) const { return attributes.at(key); }
 
-  int processMessage(string message);
+  int processMessage(KeyBook *kb, string message);
   
   MoverEncryption *getEncryption() {
     return encryption;

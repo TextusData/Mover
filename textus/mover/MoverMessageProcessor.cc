@@ -60,7 +60,8 @@ void MMPTimerEvent::close() {
 MoverMessageProcessor::MoverMessageProcessor(SecureMessageServer<MoverMessageProcessor> *p):parent(p),
 											    hello_count(0),
 											    waiting_for_messages(true),
-											    sending_messages(true) ,
+											    sending_messages(true),
+											    sent_i_have(false),
 											    need_startup_(false)
 {
   last_message = Time::now();

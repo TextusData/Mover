@@ -20,12 +20,15 @@
  */
 
 #include <set>
+#include <list>
+#include <string>
 
 #include "textus/mover/MultiKeyDescription.h"
+#include "textus/util/String.h"
 
 namespace textus { namespace mover {
 
-bool MultiKeyDescription::process(string data) {
+bool MultiKeyDescription::process(KeyBook *kb, string data) {
   int ret = 0;
   string out;
   string key_name;
@@ -33,11 +36,11 @@ bool MultiKeyDescription::process(string data) {
     descriptions.begin();
   HRFALSE(i == descriptions.end());
   HRC(encryption()->decrypt(i->second, data, &out, &key_name));
-  
+  key_name = textus::util::StringUtils::trim(key_name);
   i = descriptions.find(key_name);
   HRFALSE(i == descriptions.end());
-  
-  HRC(i->second->processMessage(data));
+
+  HRC(i->second->processMessage(kb, out));
   
  error_out:
   return ret == 0;
@@ -45,10 +48,21 @@ bool MultiKeyDescription::process(string data) {
 
 bool MultiKeyDescription::addKeyDescription(KeyDescription *kd) {
   ReferenceValueMap<string, KeyDescription *>::iterator i = descriptions.begin();
+  int ret=0;
   if (i == descriptions.end() || isCompatible(kd, i->second)) {
-    descriptions[kd->at("key_name")] = kd;
+    HRTRUE(kd->count("key-name") > 0);
+    descriptions[kd->at("key-name")] = kd;
+    if (kd->count("aliases") > 0) {
+      list<string> l =
+	textus::util::StringUtils::split(kd->at("aliases"), '|');
+      for (list<string>::iterator j = l.begin(); j != l.end(); ++j) {
+	HRTRUE(descriptions.count(*j) == 0);
+	descriptions[*j] = kd;
+      }
+    }
     return true;
   }
+ error_out:
   return false;
 }
 

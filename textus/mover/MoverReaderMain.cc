@@ -50,36 +50,71 @@ int main(int argc, const char *argv[], const char *envp[]) {
     AUTODEREF(KeyBook *, kb);
     AUTODEREF(Config *, cf);
     AUTODEREF(LineReader *, lr);
+    AUTODEREF(Directory *, mroot);
+    mroot = Directory::lookup(mover_user_root);
+    HRNULL(mroot);
+    if (!mroot->exists()) {
+      HRTRUE(mroot->createPath(0700));
+    }
 
     string line;
-    LineReaderStatus::status stat;
-
     ConfigData *cd=NULL;
     off_t pos;
     string value;
     list<string> search_path;
     mover = new Mover();
     HRNULL(mover);
+
+    string config_path = mover_crypto_config;
+    TextusFile *tf = TextusFile::openConfigFile(config_path, O_RDONLY);
+    if (tf == NULL) {
+      fprintf (stderr, "Unable to open crypto.cfg: %s\n", config_path.c_str());
+      exit (3);
+    }
+
+    if (MoverEncryption::fromConfigFile(tf) != 0) {
+      fprintf (stderr, "Unable to read crypto.cfg file: %s\n",
+	       config_path.c_str());
+      exit (2);
+    }
+
+    HRC(mover->attachFileStore(textus::mover::mover_root));
+
     cf = new Config();
     HRNULL(cf);
     state_file = TextusFile::openWithPath(mover_user_root,
 					  mover_reader_state_file,
-					  O_RDWR);
+					  O_RDWR|O_CREAT);
     HRNULL(state_file);
     HRC(cf->readFile(state_file));
     cd = cf->root();
-    HRC(cd->getStringByName("next_read", &value));
-    pos = atoll(value.c_str());
+    if (cd->getStringByName("next_read", &value)) {
+      char buff[40];
+      pos = 0;
+      pos = state_file->seek(0, SEEK_CUR);
+      snprintf(buff, sizeof(buff), "%ld", pos);
+      cd->setStringByName("next_read", string(buff));
+      // XXXXX FIXME.  Should write to a temp file and then
+      // move it.
+      state_file->seek(0);
+      state_file->truncate(0);
+      cf->writeFile(state_file);
+      state_file->sync();
+    } else {
+      pos = atoll(value.c_str());
+    }
+
     seen_file = TextusFile::openDataFile(mover_have_file_name, O_RDONLY);
     HRNULL(seen_file);
     HRTRUE(seen_file->seek(pos, SEEK_SET) == pos);
 
-    search_path.push_back(mover_root);
+    search_path.push_front(mover_root);
+    search_path.push_front(textus::base::init::getDataPath("."));
     for (list<string>::iterator i = mover_key_book_dir.begin();
 	 i != mover_key_book_dir.end(); ++i) {
-      search_path.push_back(*i);
+      search_path.push_front(*i);
     }
-    search_path.push_back(mover_user_root);
+    search_path.push_front(mover_user_root);
 
     kb = new KeyBook();
     HRNULL(kb);
@@ -91,8 +126,7 @@ int main(int argc, const char *argv[], const char *envp[]) {
     }
     
     lr = new LineReader(dynamic_cast<FileHandle *>(seen_file));
-    for (line = lr->readLine(stat); stat == LineReaderStatus::ok;
-	 line = lr->readLine(stat)) {
+    for (line = lr->waitForLine(); !lr->eof(); line = lr->waitForLine()) {
       while (line.length() > 0 &&isspace(line[line.length() - 1])) {
 	line = line.substr(0, line.length() - 1);
       }
@@ -101,7 +135,9 @@ int main(int argc, const char *argv[], const char *envp[]) {
 	pos = state_file->seek(0, SEEK_CUR);
 	snprintf(buff, sizeof(buff), "%ld", pos);
 	cd->setStringByName(string("next_read"), string(buff));
-	cf->writeFile(state_file);
+	state_file->seek(0);
+	state_file->truncate(0);
+	//	cf->writeFile(state_file); XXXXXX Makes Debuggin Easier.
 	state_file->sync();
       }
     } 
@@ -110,7 +146,7 @@ int main(int argc, const char *argv[], const char *envp[]) {
     pos = state_file->seek(0, SEEK_CUR);
     snprintf(buff, sizeof(buff), "%ld", pos);
     cd->setStringByName("next_read", string(buff));
-    cf->writeFile(state_file);
+    //cf->writeFile(state_file);
     state_file->sync();
 
   }

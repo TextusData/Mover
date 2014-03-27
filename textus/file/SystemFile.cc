@@ -38,6 +38,10 @@ int SystemFile::sync() {
   return fsync(nativeHandle());
 }
 
+int SystemFile::truncate(off_t pos) {
+  return ftruncate(nativeHandle(), pos);
+}
+
 int SystemFile::open(const string filename, int access, int mode)
 {
   EXEC_BARRIER();

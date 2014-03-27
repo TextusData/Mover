@@ -35,6 +35,7 @@
 #include "textus/util/Base64.h"
 #include "textus/util/Hex.h"
 #include "textus/config/Config.h"
+#include "textus/system/Environment.h"
 
 namespace textus { namespace base { namespace init {
 
@@ -1050,6 +1051,7 @@ int ArgumentAppender::processOneArgument(string arg, string rest_arg) {
   if ((*map_iterator).second->func(rest_arg, (*map_iterator).second->arg)) {
     return 1;
   }
+  (*map_iterator).second->overriden = true;
 
   return 0;
 }
@@ -1203,6 +1205,14 @@ int converter_string(const string &s, void *v)
   return 0;
 }
 
+int converter_path(const string &s, void *v)
+{
+  string *sp = static_cast<string *>(v);
+  *sp = textus::system::Environment::systemEnvironment().expandStrings(s);
+  *sp = textus::file::TextusFile::expandPath(*sp);
+  return 0;
+}
+
 int converter_Bool(const string &s, void *v)
 {
   using namespace textus::base::logic;
@@ -1249,6 +1259,21 @@ string getDataPath(const string file) {
   using namespace textus::file;
   return TextusFile::pathJoin(TextusFile::pathJoin(app_directory->pathName(), 
 						   "data"), file);
+}
+
+// This will get called after all of the command line and config file
+// arguments are processed. We need to expand any paths that were left
+// in their default state.
+DEFINE_INIT_FUNCTION(reset, EARLY_INIT_PRIORITY) {
+  for (map<string, ArgumentAppender::initializer *>::iterator i =
+	 ArgumentAppender::argument_map().begin();
+       i != ArgumentAppender::argument_map().end(); ++ i) {
+    if (i->second->func == converter_path && !i->second->overriden) {
+      converter_path(*static_cast<string *>(i->second->arg), i->second->arg);
+    }
+  }
+
+  return 0;
 }
 
 

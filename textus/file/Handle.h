@@ -1,5 +1,5 @@
 /* Handle.h -*- c++ -*-
- * Copyright (c) 2009-2013 Ross Biro
+ * Copyright (c) 2009-2014 Ross Biro
  *
  * Represents a handle that can be used for i/o.
  * Generally if the handle has an underlying file descriptor,
@@ -58,7 +58,36 @@ public:
 
   virtual string read(int maxlen) = 0;
   virtual int write(string data) = 0;
-  virtual void close() = 0;
+  virtual void close() {
+    AUTODEREF(HandleEventFactory *, f);
+    AUTODEREF(EventQueueScheduler *, s);
+    AUTODEREF(Actor *, a);
+    {
+      Synchronized(this);
+      a = context_obj;
+      if (a) {
+	a->ref();
+      }
+      context_obj = NULL;
+
+      s = scheduler;
+      if (s) {
+	s->ref();
+      }
+      scheduler = NULL;
+
+      f = factory;
+      if (f) {
+	f->ref();
+      }
+      factory = NULL;
+    }
+
+    if (a) {
+      a->close();
+    }
+
+  }
   
   Actor *context() {
     Synchronized(this);

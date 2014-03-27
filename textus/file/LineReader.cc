@@ -1,5 +1,5 @@
 /* LineReader.cc -*- c++ -*-
- * Copyright (c) 2010, 2013 Ross Biro
+ * Copyright (c) 2010, 2013, 2014 Ross Biro
  *
  * A class to read a file one line at a time.
  *
@@ -106,6 +106,9 @@ string LineReader::readLine(LineReaderStatus::status &status)
   t = buffer.find('\n');
   if (eof_flag && t == string::npos) {
     t = buffer.length();
+    if (t == 0) {
+      t = string::npos;
+    }
   }
   if (t != string::npos) {
     string line = buffer.substr(0, t);

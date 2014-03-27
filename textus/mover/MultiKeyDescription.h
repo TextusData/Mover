@@ -34,6 +34,8 @@ namespace textus { namespace mover {
 using namespace textus::base;
 using namespace std;
 
+class KeyBook;
+
 class MultiKeyDescription: virtual public Base {
 private:
   MVAR(public, MoverEncryption, encryption );
@@ -47,7 +49,7 @@ protected:
 public:
   explicit MultiKeyDescription() {}
   virtual ~MultiKeyDescription() {}
-  bool process(string data);
+  bool process(KeyBook *kb, string data);
   bool addKeyDescription(KeyDescription *kd);
   
 };

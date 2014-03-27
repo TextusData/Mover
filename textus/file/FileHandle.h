@@ -153,7 +153,7 @@ public:
     if (out_buffer.length() > 0) {
       watch_write = true;
       size_t ret = write(out_buffer);
-      LOG(DEBUG) << "Attempted to write " << out_buffer << " wrote " << ret << "bytes.\n";
+      LOG(DEBUG) << "Attempted to write " << out_buffer.length() << " wrote " << ret << "bytes.\n";
       if (ret > 0) {
 	out_buffer = out_buffer.substr(ret);
 	if (out_buffer.length() == 0) {
@@ -161,6 +161,8 @@ public:
 	  if (close_on_empty_buffer) {
 	    close();
 	  }
+	} else {
+	  watch_write = true;
 	}
       }
       wakeMonitor();
@@ -296,15 +298,19 @@ public:
 
   virtual void close()
   { 
-    assert(!textus::base::init::shutdown_done);
-    Synchronized(this);
-    Synchronized(&file_list);
-    file_list.erase(this);
-    on_list = false;
-    if (fh != -1) {
-      ::close(fh);
-      fh = -1;
+    {
+      assert(!textus::base::init::shutdown_done);
+      Synchronized(this);
+      Synchronized(&file_list);
+      file_list.erase(this);
+      on_list = false;
+      if (fh != -1) {
+	::close(fh);
+	fh = -1;
+      }
     }
+
+    Handle::close();
   }
 
   virtual int tryReadLock() {

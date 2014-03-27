@@ -40,6 +40,12 @@ public:
   }
 };
 
+#define foreacht(type, i, col) \
+  for(type::iterator i = col.begin(); i != col.end(); ++i)
+
+#define foreachc(type, i, col) \
+  for(type::const_iterator i = col.begin(); i != col.end(); ++i)
+
 }} //namespace
 
 

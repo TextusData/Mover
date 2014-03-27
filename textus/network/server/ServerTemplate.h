@@ -85,6 +85,7 @@ private:
   AutoDeref<ServerSocket<T, S, P> > parent;
 
 public:
+  typedef ServerSocket<T, S, P> ServerSocketType;
   explicit ServerMessageWatcher(ServerSocket<T, S, P> *);
   virtual ~ServerMessageWatcher();
   void signalReceived();
@@ -97,6 +98,7 @@ private:
   AutoWeakDeref<ServerSocket<T, S, P> > parent;
 
 public:
+  typedef ServerSocket<T, S, P> ServerSocketType;
   explicit ServerActor(ServerSocket<T, S, P> *p):parent(p) {}
   virtual ~ServerActor() {}
   virtual void act(Message *m);
@@ -224,23 +226,43 @@ public:
   }
 
   void sendMessage(textus::event::Message *m) {
-    Synchronized(this);
     string s = m->marshall();
     S::sendData(s);
   }
 
   void onConnect() {
-    Synchronized(this);
-    getProcessor()->onConnect();
-    watcher->close();
-    watcher=NULL;
+    AUTODEREF(T *, p);
+    AUTODEREF(watcher_type *, w);
+    {
+      Synchronized(this);
+      p = getProcessor();
+      if (p) {
+	p->ref();
+      }
+      
+      w = watcher;
+      if (w) {
+	w->ref();
+      }
+      watcher = NULL;
+    }
+
+    if (p) {
+      p->onConnect();
+    }
+
+    if (w) {
+      w->close();
+    }
+
   }
 };
 
 template <class T, class S, class P> class TReaderServer: public P {
 private:
 public:
-  explicit TReaderServer(ServerSocket<T, S, P> *s);
+  typedef ServerSocket<T, S, P> ServerSocketType;
+  explicit TReaderServer(ServerSocketType *s);
   virtual ~TReaderServer() {}
 
   void messageRead(class P::EventType *lre);
@@ -253,21 +275,46 @@ template <class T, class S, class P> TReaderServer<T, S, P>::TReaderServer(Serve
 
 template <class T, class S, class P> void TReaderServer<T, S, P>::messageRead(class P::EventType *lre)
 {
-  Synchronized(this);
-  ServerSocket<T, S, P> *s = dynamic_cast<ServerSocket<T, S, P> *>(S::handle());
-  s->messageRead(lre);
+  AUTODEREF(ServerSocketType *, s);
+  {
+    Synchronized(this);
+    s = dynamic_cast<ServerSocketType *>(S::handle());
+    if (s) {
+      s->ref();
+    }
+  }
+  if (s) {
+    s->messageRead(lre);
+  }
 }
 
 template <class T, class S, class P> void TReaderServer<T, S, P>::eof(class P::EventType *lre)
 {
-  Synchronized(this);
-  ServerSocket<T, S, P> *s = dynamic_cast<ServerSocket<T, S, P> *>(S::handle());
-  s->eof(lre);
+  AUTODEREF(ServerSocketType *, s);
+  {
+    Synchronized(this);
+    s = dynamic_cast<ServerSocketType *>(S::handle());
+    if (s) {
+      s->ref();
+    }
+  }
+  if (s) {
+    s->eof(lre);
+  }
 }
 
-template <class T, class S, class P> void ServerActor<T, S, P>::act(Message *m) {
-  if (parent) {
-    parent->processMessage(m);
+template <class T, class S, class P> void ServerActor<T, S, P>::act(Message *m) 
+{
+  AUTODEREF(ServerSocketType *, p);
+  {
+    Synchronized(this);
+    p = parent;
+    if (p) {
+      p->ref();
+    }
+  }
+  if (p) {
+    p->processMessage(m);
   }
 }
 
@@ -289,19 +336,34 @@ template <class T, class S, class P> ServerMessageWatcher<T, S, P>::~ServerMessa
 template <class T, class S, class P> void
 ServerMessageWatcher<T, S, P>::signalReceived()
 {
-  Synchronized(this);
-  if (parent && parent->isConnected()) {
-    parent->onConnect();
+  AUTODEREF(ServerSocketType *, p);
+  {
+    Synchronized(this);
+    p = parent;
+    if (p) {
+      p->ref();
+    }
     close();
+  }
+  if (p && p->isConnected()) {
+    p->onConnect();
   }
 }
 
 template <class T, class S, class P> void
 ServerMessageWatcher<T, S, P>::close()
 {
-  if (parent) {
-    parent->removeWatcher(this);
-    parent = NULL;
+  AUTODEREF(ServerSocketType *, p);
+  {
+    Synchronized(this);
+    p = parent;
+    if (p) {
+      p->ref();
+      parent = NULL;
+    }
+  }
+  if (p) {
+    p->removeWatcher(this);
   }
 }
 

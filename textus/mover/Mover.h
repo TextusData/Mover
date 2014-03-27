@@ -136,7 +136,7 @@ public:
   void setMoverDone(bool flag=true) { Synchronized(this); mover_done = flag; }
   void uploadOnly(bool flag=true) { Synchronized(this); upload_only = flag; }
   int createRandomMessage();
-  string addHeader(uint64_t magic, string data, int type);
+  string addHeader(uint64_t magic, string data, uint32_t type);
   string getDataForHash(string hash);
 };
 

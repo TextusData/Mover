@@ -1,5 +1,5 @@
 /* ProtoBufObject.cc -*- C++ -*-
- * Copyright (C) 2010 Ross Biro
+ * Copyright (C) 2010, 2014 Ross Biro
  *
  * A class that represents a persistant object stored
  * in the file system in the form of a protocol buffer.
@@ -49,9 +49,20 @@ public:
 };
 
 int ProtoBufObject::weakDelete() {
-  if (pbr && pbr->handle()) {
-    pbr->handle()->setContext(NULL);
+  AUTODEREF(ProtoBufReader *, p);
+  {
+    Synchronized(this);
+    p = pbr;
+    if (p) {
+      p->ref();
+    }
+    pbr = NULL;
   }
+
+  if (p != NULL) {
+    p->close();
+  }
+
   return PersistantObject::weakDelete();
 }
 

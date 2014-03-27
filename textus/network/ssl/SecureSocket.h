@@ -132,6 +132,7 @@ protected:
     }
     connecting = false;
     connected = true;
+    watchRead();
     signal();
     return 0;
   }
@@ -146,6 +147,7 @@ protected:
     }
     accepting = false;
     connected = true;
+    watchRead();
     signal();
     return 0;
   }

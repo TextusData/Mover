@@ -87,9 +87,13 @@ public:
 					int mode = 0600);
   static TextusFile *openConfigFile(const string name, int access, int mode=0660);
   static TextusFile *openDataFile(const string name, int access, int mode=0660);
+  static TextusFile *openStdin();
 
   static bool exists(string name);
-  static string pathJoin(const string p1, const string p2);
+  static string pathJoin(const string &p1, const string &p2);
+  static string expandPath(const string &p1);
+  static bool absPath(const string &p);
+  static list<string> pathSplit(const string &p1);
 
   iterator begin() { return iterator(this, 0, 0); }
   iterator end() { return iterator(this, -1, -1); }
@@ -100,6 +104,10 @@ public:
   virtual int write(string data) = 0;
   virtual void close() = 0;
   virtual bool eof() = 0;
+  virtual int truncate(off_t pos) { LOG (ERROR) << "truncate called on TextusFile.\n";
+    die();
+    return -1;
+  }
   virtual off_t seek(off_t o, int whence = SEEK_SET) { LOG(ERROR) << "TextusFile seek called." << "\n"; die(); return -1; }
   virtual off_t tell() { return seek(0, SEEK_CUR); }
   virtual int lock()  { LOG(ERROR) << "TextusFile lock called." << "\n"; die(); return -1; }

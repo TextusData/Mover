@@ -25,7 +25,7 @@
 
 namespace textus { namespace mover {
 
-DEFINE_STRING_ARG(default_address_book_file_name, "addresses.cfg", "default_address_book_file_name", "The default address book.");
+DEFINE_STRING_ARG(default_address_book_file_name, "address.cfg", "default_address_book_file_name", "The default address book.");
 
 using namespace textus::base;
 using namespace std;
@@ -34,7 +34,7 @@ using namespace textus::config;
 
 static Base address_book_lock;
 
-static AddressBook *default_book;
+static AddressBook *default_book=NULL;
 
 AddressBook *AddressBook::defaultBook() {
   Synchronized(&address_book_lock);
@@ -47,12 +47,15 @@ AddressBook *AddressBook::defaultBook() {
 
 AddressBook *AddressBook::loadAddressBook(string file) {
   int ret = 0;
+  AddressBook *ab = NULL;
   AUTODEREF(TextusFile *, fh);
-  fh = TextusFile::openFile(file, O_RDONLY);
+  fh = TextusFile::openDataFile(file, O_RDONLY);
   HRNULL(fh);
+  ab = loadAddressBook(fh);
+  HRNULL(ab);
  error_out:
-  if (ret == 0) {
-    return loadAddressBook(fh);
+  if (ret != 0 && ab != NULL) {
+    ab->deref();
   }
   return NULL;
 }
@@ -60,7 +63,7 @@ AddressBook *AddressBook::loadAddressBook(string file) {
 AddressBook *AddressBook::loadAddressBook(TextusFile *fh) {
   int ret = 0;
   AUTODEREF(Config *, cfg);
-  AUTODEREF(ConfigData *, cd);
+  ConfigData *cd;
   AddressBook *addrbook = new AddressBook();
 
   cfg = new Config();
@@ -79,7 +82,7 @@ AddressBook *AddressBook::loadAddressBook(TextusFile *fh) {
 
  error_out:
   if (ret < 0) {
-    delete addrbook;
+    addrbook->deref();
     return NULL;
   }
   return addrbook;

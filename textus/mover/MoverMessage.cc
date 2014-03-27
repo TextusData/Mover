@@ -20,6 +20,8 @@
  *
  */
 
+#include <sstream>
+
 #include "textus/base/init/Init.h"
 #include "textus/mover/Mover.h"
 #include "textus/mover/MoverMessage.h"
@@ -27,8 +29,17 @@
 
 namespace textus { namespace mover {
 
+using namespace std;
+
 DEFINE_INT_ARG(mover_random_data_max, 16384, "mover_random_data_max", "The maximum size of the random chunk that is incl*uded in every message.");
 DEFINE_INT_ARG(mover_random_data_min, 4096, "mover_random_data_min", "The minimum size of the random chunk that is included in every message.");
+
+string MoverMessage::toString() const {
+  stringstream ss;
+  ss << "MoverMessage: type = " << (int)messageType() 
+     << ", length = " << data.length();
+  return ss.str();
+}
 
 }} //namespace
 

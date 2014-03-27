@@ -59,6 +59,8 @@ public:
   typedef typename map<kt, dt>::reverse_iterator reverse_iterator;
   typedef typename map<kt, dt>::const_reverse_iterator const_reverse_iterator;
 
+  static iterator member_iterator;
+
   ReferenceValueMap(): base_map() {}
   ReferenceValueMap(const key_compare& comp): base_map(comp) {}
 

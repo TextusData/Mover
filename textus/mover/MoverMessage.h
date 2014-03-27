@@ -81,7 +81,10 @@ public:
     return message;
   }
 
+  virtual std::string toString() const;
+
   string marshall(uint8_t category, uint8_t type) {
+    LOG(DEBUG) << "MoverMessage::marshall: " << *this << "\n";
     Synchronized(this);
     string d;
     string r = Random::data(mover_random_data_min, mover_random_data_max);
@@ -95,7 +98,7 @@ public:
     d = Message::append(d, length);
     d = Message::append(d, t);
     d = Message::append(d, csum);
-    d = Message::append(d, r.length());
+    d = Message::append(d, (uint32_t)r.length());
     d = d + r;
     d = d + data;
     d = Message::setChecksum(d);

@@ -40,6 +40,7 @@ public:
   virtual int lock();
   virtual int unlock();
   virtual int sync();
+  virtual int truncate(off_t pos);
 
   static std::string generateUniqueName();
 

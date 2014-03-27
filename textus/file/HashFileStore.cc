@@ -95,6 +95,7 @@ int HashFileStore::openRoot(Directory *rd, bool rebuild_hash) {
   AUTODEREF(FileHandle *, fh);
   AUTODEREF(DirectoryEntry *,kh);
   int ret = 0;
+  HRTRUE(rd->exists());
   setroot(rd);
   sethashes(new FileBackedSet<string>);
   HRNULL(hashes());

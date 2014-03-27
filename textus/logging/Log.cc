@@ -136,7 +136,7 @@ int FileLogger::rotate()
 // This will get called after all of the command line and config file
 // arguments are processed.  We just reset everything incase something
 // important changed.
-DEFINE_INIT_FUNCTION(reset, EARLY_INIT_PRIORITY) {
+DEFINE_INIT_FUNCTION(reset, EARLY_INIT_PRIORITY + 1) {
   for (int i = 0; loggers[i] != NULL; ++i) {
     loggers[i]->rotate();
   }

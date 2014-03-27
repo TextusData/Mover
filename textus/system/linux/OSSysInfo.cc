@@ -130,19 +130,93 @@ void SysInfo::random(unsigned char *obuff, unsigned len) {
     obuff[i] ^= ibuff[i];
   }
 }
+#define call_pw_func(func, arg, buff, res)				\
+  {									\
+    int buff_size = 0;							\
+    int new_buff_size = 0;						\
+    new_buff_size = sysconf(_SC_GETPW_R_SIZE_MAX);			\
+    if (new_buff_size < 0) {						\
+      new_buff_size = 4000;/* arbitrary */				\
+    }									\
+									\
+    while (true) {							\
+      if (new_buff_size != buff_size) {					\
+        if (buff) {							\
+  	  free(buff);							\
+	  buff = NULL;							\
+	}								\
+									\
+	buff = static_cast<char *>(malloc(new_buff_size));		\
+	HRNULL(buff);							\
+	buff_size = new_buff_size;					\
+      }									\
+									\
+      ret = func(arg, &pwd, buff, buff_size, &res);			\
+      if (ret == 0) {							\
+	break;								\
+      }									\
+									\
+      if (ret == ERANGE) {						\
+	new_buff_size *= 2;						\
+      }  else if (ret != EINTR) {					\
+	break;								\
+      }									\
+    }									\
+  }									\
 
 string SysInfo::getUser() {
   uid_t u = getuid();
   struct passwd pwd;
-  char buff[1024]; // XXXXXX FIXME, we should make this variable and retry.
-  struct passwd *res;
+  char *buff=NULL;
+  struct passwd *res = NULL;
+  int ret = 0;
+  
+  call_pw_func(getpwuid_r, u, buff, res);
 
-  if (getpwuid_r(u, &pwd, buff, sizeof(buff), &res) != 0 || res == NULL) {
-    return "";
+ error_out:
+  if (ret != 0 || res == NULL) {
+    if (buff != NULL) {
+      free(buff);
+    }
+    return string("");
+  }
+
+  // caller must free.
+  string name(pwd.pw_name);
+
+  if (buff) {
+    free(buff);
   }
   
-  return string(res->pw_name);
+  return name;
 }
 
-}} //namespace
+string SysInfo::getHomeDir(const string &user) {
+  struct passwd pwd;
+  char *buff=NULL;
+  struct passwd *res = NULL;
+  int ret = 0;
+  
+  call_pw_func(getpwnam_r, user.c_str(), buff, res);
 
+ error_out:
+  if (ret != 0 || res == NULL) {
+    if (buff != NULL) {
+      free(buff);
+    }
+    return string("");
+  }
+
+  // caller must free.
+  string dir(pwd.pw_dir);
+
+  if (buff) {
+    free(buff);
+  }
+  
+  return dir;
+}
+
+#undef call_pw_func
+
+}} //namespace

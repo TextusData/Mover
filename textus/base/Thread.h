@@ -91,6 +91,13 @@ private:
   // Private initializer only used to attach to existing threads.
   Thread(): id(), is_done(false), signal_type(-1), no_do_all(false)
   {
+    // By Default Everyone blocks sigchild.  Only
+    // the repear thread unblocks it.
+    sigset_t set;
+    sigemptyset(&set);
+    sigaddset(&set, SIGCHLD);
+    pthread_sigmask(SIG_BLOCK, &set, NULL);
+
     id.id = ThreadID::self().id;
     ThreadsCreated++;
     pthread_setspecific(thread_class_key, this);
@@ -128,6 +135,12 @@ public:
     pthread_t tid;
     start_up = start;
     argument = arg;
+
+    // Should be redundant, should have inherited it.
+    sigset_t set;
+    sigemptyset(&set);
+    sigaddset(&set, SIGCHLD);
+    pthread_sigmask(SIG_BLOCK, &set, NULL);
       
     // Grab a lock so we can control the start order.
     // The thread start routine will not be called

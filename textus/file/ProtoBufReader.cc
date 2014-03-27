@@ -232,9 +232,11 @@ Message *ProtoBufReader::readMessage(ProtoBufReaderStatus::status &status)
       }
 
       buffer = buffer.substr(len+offset);
-      Actor *a = fh->context();
-      if (a) {
-	a->act(m);
+      if (fh) {
+	Actor *a = fh->context();
+	if (a) {
+	  a->act(m);
+	}
       }
 
       if (factory) {

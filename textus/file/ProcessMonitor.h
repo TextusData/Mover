@@ -1,5 +1,5 @@
 /* ProcessMonitor.h -*- c++ -*-
- * Copyright (c) 2010 Ross Biro
+ * Copyright (c) 2010, 2014 Ross Biro
  *
  * Keep an eye on a process
  */
@@ -73,7 +73,9 @@ public:
     complete(e->status());
   }
 
-  virtual void canWrite(ProcessEvent *e) {}
+  virtual void canWrite(ProcessEvent *e) {
+    stdin()->writer()->canWrite(e);
+  }
 
   virtual void read(ProcessEvent *e) {}
 

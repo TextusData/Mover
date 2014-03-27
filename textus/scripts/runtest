@@ -65,9 +65,9 @@ sub main {
 
     if ($@) {
 	die unless $@ eq "alarm\n";
+	print STDERR "\nTimed out.\n";
 	kill "TERM", -$pid;
 	kill 9, -$pid;
-	print STDERR "\nTimed out.\n";
 	exit 1;
     }
 

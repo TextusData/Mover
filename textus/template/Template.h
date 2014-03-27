@@ -31,13 +31,15 @@
 #include <string>
 #include <set>
 
-
 #include "textus/base/Base.h"
 #include "textus/base/OneTimeUse.h"
 #include "textus/file/FileBackedNumber.h"
 #include "textus/file/FileHandle.h"
+#include "textus/base/functor/Functor.h"
 
 namespace textus { namespace template_ {
+
+using namespace textus::base;
 
 class TemplateBase: virtual public textus::base::Base {
 private:
@@ -53,7 +55,8 @@ protected:
 public:
   explicit TemplateBase() {}
   virtual ~TemplateBase() {}
-  size_t process(std::string in, std::string *out);
+  size_t process(const std::string &in, std::string *out);
+
   int setBackingFile(std::string name) {
     int ret=0;
     HRC(counter.getBacking().attachFile(name));
@@ -88,6 +91,22 @@ public:
   explicit Template(T d): data(d) {}
   virtual ~Template() {}
 
+};
+
+template <class T> class TemplateFunctor:
+    public textus::base::functor::StringFunctor {
+ private:
+  AutoDeref< Template<T> > templ;
+
+ public:
+  explicit TemplateFunctor(Template<T> *t): templ(t) {}
+  virtual ~TemplateFunctor() {}
+  virtual int apply(const string &in, string *out) {
+    int ret = 0;
+    HRC(templ->process(in, out));
+  error_out:
+    return ret;
+  }
 };
 
 }} //namespace

@@ -22,10 +22,12 @@
 
 #include "textus/mover/KeyDescription.h"
 #include "textus/mover/ExternalEncryption.h"
+#include "textus/mover/KeyBook.h"
 #include "textus/config/Config.h"
 #include "textus/file/Shell.h"
 #include "textus/template/Template.h"
 #include "textus/system/Environment.h"
+#include "textus/event/Message.h"
 
 namespace textus { namespace mover {
 
@@ -80,15 +82,57 @@ int KeyDescription::addToConfigData(ConfigData *cd) {
   return ret;
 }
 
-int KeyDescription::processMessage(string message) {
+void KeyDescription::setVariables() {
+
+  set("app-binary-path", textus::system::Environment::systemEnvironment().getVariable("APP_BINARY_PATH"));
+  set("app-data-path", textus::system::Environment::systemEnvironment().getVariable("APP_PATH") + "/data");
+  set("app-config-path", textus::system::Environment::systemEnvironment().getVariable("APP_PATH") + "/config");
+
+}
+
+int KeyDescription::processMessage(class KeyBook *kb, string message) {
   int ret=0;
   string cmd_template;
   string cmd;
+  size_t offset;
+  uint64_t magic;
+  int type;
+
   AUTODEREF(Shell *, s);
   AUTODEREF(Template<KeyDescription *> *, t);
 
   HRTRUE (count("read") != 0);
   cmd_template = at("read");
+  setVariables();
+  //chomp the first bit.
+  offset = message[0] & 7;
+  HRTRUE (offset + 1 < message.length());
+  message = message.substr(offset+1);
+
+  HRTRUE(message.length() > 12); // make sure the header is there.
+  magic = textus::event::Message::getUint64(message, 0);
+  type = textus::event::Message::getUint32(message, 8);
+
+  HRTRUE (magic == strtoull(attributes["magic"].c_str(), NULL, 0));
+
+  message = message.substr(12);
+
+  switch (type) {
+
+  case MOVER_HEADER_TYPE_MESSAGE:
+    /* Normal case, it's just a message. */
+    break;
+
+  case MOVER_HEADER_TYPE_RECURSIVE:
+    HRTRUE(kb->processData(message));
+    goto error_out;
+
+  default:
+    LOG(WARNING) << "Unknown message type: " << type << "\n";
+    HRTRUE(type == MOVER_HEADER_TYPE_MESSAGE);
+    break;
+  }
+
 
   /* XXXXXXX FIXME: this code has been copied from External Encryption.
      it should only be in one place.
@@ -96,7 +140,6 @@ int KeyDescription::processMessage(string message) {
   /* XXXXXXX Really fix me.  This code doesn't belong here at all, it belongs
      in ExternalEncryption.
   */
-  set("app-binary-path", textus::system::Environment::systemEnvironment().getVariable("APP_BINARY_PATH"));
   t = new Template<KeyDescription *>(this);
   HRNULL(t);
   HRC(t->setBackingFile(mover_template_backing_file));

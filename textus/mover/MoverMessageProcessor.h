@@ -69,12 +69,14 @@ private:
   int hello_count;
   bool waiting_for_messages;
   bool sending_messages;
+  bool sent_i_have;
   set<UUID> extensions;
   Time last_message;
   Time first_message;
   int connection_timeout;
   int max_connection_time;
   MBOOL(protected, need_startup);
+
 
 protected:
   class Mover *mover() {
@@ -103,11 +105,40 @@ public:
   void setTimeout(int t) {
     Synchronized(this);
     connection_timeout=t;
+    maybeResetTimer(Duration::seconds(t));
   }
 
+  // XXXX Fixme: Doesn't automatically reset timers.
   void setMaxConnectionTime(int t) {
     Synchronized(this);
     max_connection_time=t;
+  }
+
+  void maybeResetTimer(Duration d) {
+    Synchronized(this);
+    if (timer->endTime() > Time::now() + d) {
+      resetTimer(d);
+    }
+  }
+
+  void resetTimer(Duration d) {
+    Synchronized(this);
+    if (timer) {
+      timer->close();
+      timer = NULL;
+    }
+    AUTODEREF(MMPTimerEvent *, te);
+    te = new MMPTimerEvent(d, this);
+    if (te == NULL) {
+      LOG(ERROR) << "MMPTimerEvent: Unable to create random timer.";
+      sendGoodBye();
+    }
+    timer = te;
+  }
+
+  void fastTimeout() {
+    Synchronized(this);
+    setTimeout(connection_timeout/2);
   }
 
   void close() {
@@ -199,13 +230,15 @@ public:
   }
 
   void sendGoodBye() {
-    Synchronized(this);
-    AUTODEREF(MoverMessage *, mm);
-    mm = new MoverMessage("Good Bye", MOVER_MESSAGE_SUBTYPE, MOVER_MESSAGE_GOODBYE);
-    if (parent) {
-      parent->sendMessage(mm);
-      parent->close();
+    {
+      Synchronized(this);
+      AUTODEREF(MoverMessage *, mm);
+      mm = new MoverMessage("Good Bye", MOVER_MESSAGE_SUBTYPE, MOVER_MESSAGE_GOODBYE);
+      if (parent) {
+	parent->sendMessage(mm);
+      }
     }
+    close();
   }
 
   void sendMessage(string data) {
@@ -256,20 +289,30 @@ public:
 
   void sendIHave(string data) {
     AUTODEREF(MoverMessage *, mm);
+    LOG(INFO) << "Sending I Have: " << data << "\n";
     mm = new MoverMessage(data, MOVER_MESSAGE_SUBTYPE, MOVER_MESSAGE_IHAVE);
     Synchronized(this);
     if (parent) {
       parent->sendMessage(mm);
     }
+    sent_i_have = true;
   }
 
   void sendRandom() {
     AUTODEREF(MoverMessage *, mm);
+    AUTODEREF(SecureMessageServer<MoverMessageProcessor> *, p);
     mm = new MoverMessage(Random::data(), MOVER_MESSAGE_SUBTYPE,
 			  MOVER_MESSAGE_RANDOM);
-    Synchronized(this);
-    if (parent) {
-      parent->sendMessage(mm);
+    {
+      Synchronized(this);
+      p = parent;
+      if (p) {
+	p->ref();
+      }
+    }
+
+    if (p) {
+      p->sendMessage(mm);
     }
   }
 
@@ -279,26 +322,18 @@ public:
       // need to prime the pump.
       set_need_startup(false);
       afterConnect();
-      return;
+      goto reset_timer;
     }
 
     if (last_message.elapsedTime() > connection_timeout ||
 	first_message.elapsedTime() > max_connection_time) {
       sendGoodBye();
+      return;
     }
     sendRandom();
 
-    if (timer) {
-      timer->close();
-      timer = NULL;
-    }
-    AUTODEREF(MMPTimerEvent *, te);
-    te = new MMPTimerEvent(Duration::seconds(Random::rand(mover_random_message_time)), this);
-    if (te == NULL) {
-      LOG(ERROR) << "MMPTimerEvent: Unable to create random timer.";
-      sendGoodBye();
-    }
-    timer = te;
+  reset_timer:
+    resetTimer(Duration::seconds(Random::rand(mover_random_message_time)));
   }
 
   virtual void processMessage(Message *m) {
@@ -306,6 +341,7 @@ public:
       MoverMessage *mm = dynamic_cast<MoverMessage *>(m);
       Synchronized(this);
       last_message = Time::now();
+      LOG(DEBUG) << "MMP::processMessage: " << *mm << "\n";
       switch (mm->messageType()) {
 
       case MOVER_MESSAGE_HELLO:
@@ -321,6 +357,7 @@ public:
 	}
 	  
       case MOVER_MESSAGE_GOODBYE:
+	close();
 	if (parent) {
 	  parent->close();
 	}
@@ -335,7 +372,19 @@ public:
 	  string want;
 	  want = mover()->parseIHave(this, mm->getData());
 	  LOG(INFO) << "Sending I want: " << want << "\n";
-	  sendIWant(want);
+	  if (want != "") {
+	    sendIWant(want);
+	  } else {
+	    waiting_for_messages = false;
+	    if (sent_i_have && sending_messages == false) {
+	      fastTimeout();
+	    }
+	  }
+
+	  if (!sent_i_have) {
+	    string have = mover()->whatDoIHave(this);
+	    sendIHave(have);
+	  }
 	  return;
 	}
 

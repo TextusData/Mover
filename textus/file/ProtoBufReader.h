@@ -100,10 +100,15 @@ public:
   }
 
   void setEof(bool e) {
-    Synchronized(this);
-    eof_thread = Thread::self();
-    eof_flag = e;
-    signal();
+    {
+      Synchronized(this);
+      eof_thread = Thread::self();
+      eof_flag = e;
+      signal();
+    }
+    if (e) {
+      close();
+    }
   }
 
   void setEventFactory(ProtoBufReaderEventFactory *lref);
@@ -125,15 +130,19 @@ public:
   }
 
   virtual void close() {
-    Synchronized(this);
-    factory = NULL;
-    if (fh) {
-      AUTODEREF(FileHandle *, tmp);
-      tmp = fh;
-      tmp->ref();
-      fh = NULL;
-      tmp->setEventFactory(NULL);
-      tmp->close();
+    AUTODEREF(FileHandle *, close_me);
+    {
+      Synchronized(this);
+      factory = NULL;
+      if (fh) {
+	close_me = fh;
+	close_me->ref();
+	fh = NULL;
+      }
+    }
+    if (close_me) {
+      close_me->setEventFactory(NULL);
+      close_me->close();
     }
   }
 

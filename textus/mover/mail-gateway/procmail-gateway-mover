@@ -1,0 +1,8 @@
+#VERBOSE=on
+:0
+* !^FROM_DAEMON
+* !$^X-Loop:.*$\DEST
+	|echo formail -A  "X-Loop: $DEST"| $SENDMAIL $DEST
+
+DELIVERED=yes
+EXITCODE=0

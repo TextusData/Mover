@@ -385,6 +385,7 @@ void FileHandle::spaceAvailable()
 {
   Synchronized(this);
   AUTODEREF(Event *, ev);
+  watch_write = false;
   if (eventFactory()) {
     ev = eventFactory()->writeEvent();
     if (ev) {
@@ -395,7 +396,6 @@ void FileHandle::spaceAvailable()
       }
     }
   }
-  watch_write = false;
 }
 
 // Means we can read some more.

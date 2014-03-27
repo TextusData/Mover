@@ -29,6 +29,7 @@ using namespace textus::mover;
 using namespace textus::base::init;
 
 DEFINE_LIST_ARG(string, mover_destination_addresses, "destination_address", "a list of addresses to send messages to.", "");
+DEFINE_BOOL_ARG(mover_send_stdin, false, "send_stdin", "Send the contents of stdin.");
 
 int main(int argc, const char *argv[], const char *envp[])
 {
@@ -36,6 +37,7 @@ int main(int argc, const char *argv[], const char *envp[])
   TextusInit(argc, argv, envp);
   {
     AUTODEREF(Mover *, mover);
+    AUTODEREF(MoverVerifier *, mv);
     ReferenceList<TextusFile *> files;
     ReferenceList<AddressBookEntry *> addresses;
 
@@ -43,6 +45,23 @@ int main(int argc, const char *argv[], const char *envp[])
 
     mover = new Mover();
     HRNULL(mover);
+    string config_path = mover_crypto_config;
+    TextusFile *tf = TextusFile::openConfigFile(config_path, O_RDONLY);
+    if (tf == NULL) {
+      fprintf (stderr, "Unable to open crypto.cfg: %s\n", config_path.c_str());
+      exit (3);
+    }
+
+    if (MoverEncryption::fromConfigFile(tf) != 0) {
+      fprintf (stderr, "Unable to read crypto.cfg file: %s\n",
+	       config_path.c_str());
+      exit (2);
+    }
+
+
+    mover->bindCertificate(mover_certificate);
+    mv = new MoverVerifier();
+    mover->setverifier(mv);
 
     // validate all the destination addresses first.
     for (list<string>::iterator i = mover_destination_addresses.begin();
@@ -59,6 +78,13 @@ int main(int argc, const char *argv[], const char *envp[])
     }
 
     // check all the files.
+    if (mover_send_stdin) {
+      AUTODEREF(TextusFile *, tf);
+      tf = TextusFile::openStdin();
+      HRNULL(tf);
+      files.push_back(tf);
+    } 
+
     for (list<string *>::const_iterator i = getCommandLine().begin();
 	 i != getCommandLine().end(); ++i) {
       AUTODEREF(TextusFile *, tf);
@@ -70,7 +96,6 @@ int main(int argc, const char *argv[], const char *envp[])
       }
       files.push_back(tf);
     }
-
 
     for (ReferenceList<TextusFile *>::iterator i = files.begin();
 	 i != files.end();

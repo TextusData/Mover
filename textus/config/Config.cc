@@ -21,6 +21,9 @@
  */
 
 #include "textus/config/Config.h"
+#include "textus/util/String.h"
+#include "textus/util/STLExtensions.h"
+#include "textus/template/Template.h"
 
 namespace textus { namespace config {
 
@@ -28,10 +31,13 @@ static const string whitespace(" \t\r\n");
 static const string word_start_chars("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<>\\!@#$%^&*()./?'\";|");
 static const string special_characters("\\=,\n\t\r ");
 
-typedef int (Config::*command_func)(string, ConfigData *r);
+
+typedef int (Config::*command_func)(const list<string> &, ConfigData *r);
 
 static struct { string name; command_func f; } commands[]  = {
-  {"include", &Config::include }
+  {"include", &Config::include },
+  {"template", &Config::tmpl },
+  {"eval", &Config::eval },
 };
 
 static string escapeSpecials(string in) {
@@ -116,6 +122,118 @@ int ConfigData::writeFile(TextusFile *tf, int depth) {
   return ret;
 }
 
+
+
+int ConfigData::walk(textus::base::functor::StringFunctor *sf, 
+		     textus::base::functor::Functor *lf,
+		     ConfigData::PairFunctor *pf) {
+  int ret = 0;
+  switch (type()) {
+  case sdata:
+    if (sf) {
+      string out;
+      HRC(sf->apply(s_data, &out));
+      s_data = out;
+    }
+    break;
+    
+  case ldata:
+    foreach (i, *l_data) {
+      if (lf) {
+	(*lf)(*i);
+      }
+      HRC((*i)->walk(sf, lf, pf));
+    }
+    break;
+
+  case mdata:
+    list< pair <string, string> > to_move;
+    foreach (i, *m_data) {
+      if (pf) {
+	(*pf)(*i);
+      }
+      if (sf) {
+	string out;
+	HRC(sf->apply(i->first, &out));
+	if (out != i->first) {
+	  to_move.push_back(pair<string, string>(out, i->first));;
+	}
+      }
+      HRC(i->second->walk(sf, lf, pf));
+    }
+    // Now we can change the keys.
+    for(list< pair <string, string> >::iterator i = to_move.begin();
+	i != to_move.end(); ++i) {
+      (*m_data)[i->first] = (*m_data)[i->second];
+      m_data->erase(i->second);
+    }
+    break;
+  }
+
+  if (lf) {
+    /* Let the Functor know we are done
+       with the current recursion. */
+    (*lf)(NULL);
+  }
+
+  if (pf) {
+    /* Let the Functor know we are done
+       with the current recursion. */
+    (*pf)(PairFunctor::pair(NULL, NULL));
+  }
+
+ error_out:
+  return ret;
+
+}
+
+ConfigData *ConfigData::clone() {
+  int ret = 0;
+  ConfigData *cd=NULL; 
+  switch (type()) {
+  case sdata:
+    cd = makeString(s_data);
+    break;
+
+  case ldata:
+    cd = makeList();
+    HRNULL(cd);
+    for (list_iterator i = l_data->begin(); i != l_data->end(); ++i) {
+      AUTODEREF(ConfigData *, cd2);
+      cd2 = (*i)->clone();
+      HRNULL(cd2);
+      cd->l_data->push_back(cd2);
+    }
+    break;
+
+  case mdata:
+    cd = makeMap();
+    HRNULL(cd);
+    for (map_iterator i = m_data->begin(); i != m_data->end(); ++i) {
+      AUTODEREF(ConfigData *, cd2);
+      cd2 = i->second->clone();
+      HRNULL(cd2);
+      m_data->operator[](i->first) = cd2;
+    }
+    break;
+  }
+
+ error_out:
+  if (ret != 0) {
+    if (cd) {
+      cd->deref();
+    }
+    return NULL;
+  }
+  return cd;
+}
+
+
+int ConfigData::applyTemplate(ConfigTemplate *t) {
+  textus::template_::TemplateFunctor<UnionMap *> tf(t);
+  return walk(&tf, NULL, NULL);
+}
+
 int Config::writeFile(TextusFile *tf) {
   return root()->writeFile(tf);
 }
@@ -150,20 +268,100 @@ int Config::readFile(string name, ConfigData *r) {
 }
 
 int Config::handleCommand(string cmd, ConfigData *r) {
+  int ret = 0;
+  list<string> args = textus::util::StringUtils::splitAny(cmd, "\n\r\t ");
+  string cmd_name;
+  HRTRUE(args.size() > 0);
+  cmd_name = args.front();
+  // get rid of the leading $.
+  cmd_name=cmd_name.substr(1);
   for (unsigned i = 0; i < ARRAY_SIZE(commands); ++i) {
-    if (cmd == commands[i].name) {
-      return (this->*(commands[i].f))(cmd, r);
+    if (cmd_name == commands[i].name) {
+      HRC((this->*(commands[i].f))(args, r));
+      break;
     }
   }
-  return -1;
+ error_out:
+  return ret;
 }
 
-int Config::include(string cmd, ConfigData *r) {
-  string file = cmd.substr(5);
-  while (isspace(file[0])) {
-    file = file.substr(1);
+int Config::include(const list<string> &args, ConfigData *r) {
+  int ret = 0;
+  int skip = 1;
+  for (list<string>::const_iterator i = args.begin(); i != args.end(); ++i) {
+    if (skip-- > 0) {
+      continue;
+    }
+    string file = *i;
+    if (file.length() > 0) {
+      HRC(readFile(file, r));
+    }
   }
-  return readFile(file, r);
+ error_out:
+  return ret;
+}
+
+int Config::tmpl(const list<string> &args, ConfigData *r) {
+  int ret = 0;
+  int skip=1;
+  for(list<string>::const_iterator i = args.begin(); i != args.end(); ++i) {
+    if (skip-- > 0) {
+      continue;
+    }
+    string key = *i;
+    if (key.length() > 0) {
+      r->addTemplate(key);
+    }
+  }
+  return ret;
+}
+
+int Config::eval(const list<string> &args, ConfigData *r) {
+  int ret = 0;
+  int count = 0;
+  ConfigData::UnionMap map;
+  ConfigData *cd = NULL;
+  AUTODEREF(ConfigData::ConfigTemplate *, t);
+  string templ;
+
+  HRTRUE(args.size() > 2);
+  HRTRUE(r->type() == ConfigData::mdata);
+
+  t = new ConfigData::ConfigTemplate(&map);
+  HRNULL(t);
+  for (list<string>::const_iterator i = args.begin(); i != args.end(); ++i) {
+    switch (count++) {
+    case 0:
+      continue;
+
+    case 1:
+      templ = *i;
+      continue;
+    }
+
+    ConfigData::map_type *amap;
+    if (i->size() == 0) {
+      continue;
+    }
+    HRC(r->getMapByName(*i, &amap));
+    map.addMap(amap);
+  }
+
+  HRTRUE(r->asMap().count(templ) > 0);
+  cd = r->asMap()[templ];
+  
+  {
+    AUTODEREF(ConfigData *, res);
+    string newname;
+    res = cd->clone();
+    HRNULL(res);
+    HRC(res->applyTemplate(t));
+    HRC(t->process(templ, &newname));
+    (r->asMap())[newname] = res;
+  }
+
+ error_out:
+  return ret;
 }
 
 int Config::addValue(ConfigData *root, ConfigData *n) {
@@ -334,6 +532,7 @@ int Config::readFile(TextusFile *fh, ConfigData *r) {
 	    goto error_out;
 	  }
 	  HRTRUE(stack.size() != 0);
+	  r->close();
 	  r = stack.front();
 	  stack.pop_front();
 	} else if (line[j] == '}') {
@@ -344,6 +543,7 @@ int Config::readFile(TextusFile *fh, ConfigData *r) {
 	    goto error_out;
 	  }
 	  HRTRUE(stack.size() != 0);
+	  r->close();
 	  r = stack.front();
 	  stack.pop_front();
 	}
@@ -424,6 +624,7 @@ int Config::readFile(TextusFile *fh, ConfigData *r) {
     ret = -1;
     goto error_out;
   }
+  r->close();
  error_out:
   if (ret != 0) {
     LOG(INFO) << "parse error at line " << linenum << "\n";

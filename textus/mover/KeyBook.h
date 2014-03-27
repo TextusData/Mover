@@ -52,6 +52,7 @@ public:
 
   int readFileSearchPath(const list<string> &paths, string name);
   bool process(Mover *mover, string hash);
+  bool processData(string data);
 
 };
 

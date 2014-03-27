@@ -35,6 +35,8 @@ string AddressBookEntry::encrypt(string data) {
   MoverEncryption *me = getCrypto();
   HRNULL(me);
 
+  kd->setVariables();
+
   HRC(me->encrypt(kd, data, &out));
   data = "";
 
@@ -42,7 +44,7 @@ string AddressBookEntry::encrypt(string data) {
   if (ret == 0) {
     return out;
   }
-  return data;
+  return "";
 }
 
 string AddressBookEntry::prepare(Mover *mover, string data) {
@@ -74,7 +76,7 @@ int AddressBookEntry::send(Mover *mover, string data) {
   int ret = 0;
   Synchronized(this);
   data = prepare(mover, data);
-
+  HRTRUE(data.length() > 12);
   HRC(mover->uploadData(data));
 
  error_out:
@@ -102,19 +104,22 @@ int AddressBookEntry::fromConfigData(ConfigData *cd) {
   int ret = 0;
   string tmp;
   ReferenceList<ConfigData *> *name_list;
-  
+  char *endptr;
+
   HRC(cd->getStringByName("crypto", &crypto_name));
-  cd->getStringByName("first", &first);
-  cd->getStringByName("header", &header);
+  HRI(cd->getStringByName("first", &first));
+  HRI(cd->getStringByName("header", &header));
   HRC(cd->getStringByName("magic", &tmp));
-  magic = atoll(tmp.c_str());
+  magic = strtoull(tmp.c_str(), &endptr, 0);
+  HRTRUE(*endptr == 0);
   kd = KeyDescription::fromConfigData(cd);
   HRNULL(kd);
-  cd->getListByName("aliases", &name_list);
-  for (ReferenceList<ConfigData *>::iterator i = name_list->begin();
-       i != name_list->end(); ++i) {
-    if ((*i)->asString().length() > 0) {
-      names.push_back((*i)->asString());
+  if (cd->getListByName("aliases", &name_list) == 0) {
+    for (ReferenceList<ConfigData *>::iterator i = name_list->begin();
+	 i != name_list->end(); ++i) {
+      if ((*i)->asString().length() > 0) {
+	names.push_back((*i)->asString());
+      }
     }
   }
  error_out:

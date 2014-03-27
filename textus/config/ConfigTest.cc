@@ -161,12 +161,32 @@ void test5() {
   fprintf(stderr, "ok\n");
 }
 
+void test6() {
+  AUTODEREF(Config *, cfg);
+  string config1 = "foo<$bar> = <$baz>\nvars={ bar=bar1, baz=baz1}\n$eval foo<$bar> vars\n$template foo<$bar>\n$template vars\n";
+  StringFile sf(config1);
+  cfg = new Config();
+  assert (cfg != NULL);
+  fprintf(stderr, "testing template single name/value pair with quotes....");
+  assert(cfg->readFile(&sf) == 0);
+  ConfigData *cd = cfg->root();
+  assert(cd->type() == ConfigData::mdata);
+  assert(cd->asMap().size() == 1);
+  assert(cd->asMap().count(string("foobar1")) == 1);
+  cd = (cd->asMap())[string("foobar1")];
+  assert(cd != NULL);
+  assert (cd->type() == ConfigData::sdata);
+  assert(cd->asString() == string("baz1"));
+  fprintf(stderr, "ok\n");
+}
+
 void ConfigTest::run_tests() {
   test1();
   test2();
   test3();
   test4();
   test5();
+  test6();
 }
 
 }} //namespace

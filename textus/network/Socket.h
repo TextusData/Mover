@@ -252,8 +252,7 @@ public:
 	if (errno != EINPROGRESS && errno != EAGAIN) {
 	  LOG(WARNING) << "connect failed: errno=" << errno << "\n";
 	} else {
-	  watch_read=false;
-	  watch_write=true;
+	  watchWrite();
 	  ret = 0;
 	}
       } else {
@@ -305,8 +304,7 @@ public:
 
   virtual void canWrite(textus::event::Event *se) { 
     Synchronized(this); 
-    watch_write = false;
-    watch_read = true;
+    watchRead();
     AUTODEREF(NetworkAddress *, na);
     na = getPeerAddress();
     if (!na) {

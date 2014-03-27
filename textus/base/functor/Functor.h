@@ -1,7 +1,7 @@
 /* Functor.h -*- c++ -*-
- * Copyright (C) 2012 Ross Biro
+ * Copyright (C) 2012-2014 Ross Biro
  *
- * A Class the represents a predicate.
+ * A Class the represents a function.
  * so it can be applied to objects in a collection.
  */
 
@@ -25,12 +25,46 @@
 #ifndef TEXTUS_BASE_FUNCTOR_FUNCTOR_H_
 #define TEXTUS_BASE_FUNCTOR_FUNCTOR_H_
 
+#include <string>
+#include <utility>
+
 #include "textus/base/Base.h"
 #include "textus/base/predicate/Predicate.h"
+
 
 namespace textus { namespace base { namespace functor {
 
 using namespace textus::base::predicate;
+
+class StringFunctor: virtual public Base {
+public:
+  explicit StringFunctor() {}
+  virtual ~StringFunctor() {}
+
+  virtual int apply(const string &in, string *out) = 0;
+  string operator ()(const string &b) {
+    string out;
+    int ret = 0;
+    HRI(apply(b, &out));
+    return out;
+  }
+};
+
+template <typename A, typename B> class PairFunctor: virtual public Base {
+public:
+  typedef typename std::pair<A, B> pair;
+  explicit PairFunctor() {}
+  virtual ~PairFunctor() {}
+
+  virtual int apply(const pair &in, pair *out) = 0;
+  pair operator ()(const pair &b) {
+    pair out;
+    int ret = 0;
+    HRI(apply(b, &out));
+    return out;
+  }
+};
+
 
 class Functor: virtual public Base {
 public:

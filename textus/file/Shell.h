@@ -1,5 +1,5 @@
 /* Shell.h -*- c++ -*-
- * Copyright (c) 2010-2013 Ross Biro
+ * Copyright (c) 2010-2014 Ross Biro
  *
  * Execute a system command via the shell.
  */
@@ -83,8 +83,18 @@ public:
   }
 
   virtual int exitStatus() {
-    LOG(DEBUG) << "Shell otuput: " << getOutput() << "\n";
+    string s = getOutput();
+    if (s.length() > 1024) {
+      s=s.substr(0, 1024) + "...";
+    }
+    LOG(DEBUG) << "Shell otuput: " << s << "\n";
+
+    s = getErrorOutput();
+    if (s.length() > 1024) {
+      s = s.substr(0, 1024) + "...";
+    }
     LOG(DEBUG) << "Shell error: " << getErrorOutput() << "\n";
+
     return ProcessMonitor::exitStatus();
   }
 

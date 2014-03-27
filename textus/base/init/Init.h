@@ -89,16 +89,16 @@ class ArgumentAppender {
 public:
   typedef int (*converter_func)(const string &, void *);
 
-private:
   struct initializer {
     void *arg;
     converter_func func;
     const char * description;
+    bool overriden;
   } *i;
 
+public:
   static map<string, initializer *> &argument_map();
 
-public:
   static int processOneArgString(string arg);
   static int processOneArgument(string arg, string value);
   static int processArguments(list<string *> *args);
@@ -120,6 +120,7 @@ public:
     i->arg = a;
     i->func = f;
     i->description = desc;
+    i->overriden = false;
 
     string s = arg;
     
@@ -135,6 +136,7 @@ int converter_int(const string &, void *);
 int converter_unsigned(const string &, void *);
 int converter_int64_t(const string &, void *);
 int converter_string(const string &, void *);
+int converter_path(const string &, void *);
 int converter_Bool(const string &, void *);
 int converter_double(const string &, void *);
 int converter_protobuf(const string &, void *);
@@ -323,6 +325,7 @@ template <class C, class T, int (*converter)(const std::string &s, void *v), std
     return value_headers.setValue(this, key, value);		\
   }
 
+// deprecated.  Use MVAR et al now.
 #define DECLARE_VALUE(type, name) type name;
 #define DECLARE_VALUE_HEADER(c) static textus::base::init::ValueHeaders<c> value_headers;
 
@@ -378,6 +381,12 @@ template <class C, class T, int (*converter)(const std::string &s, void *v), std
 #define DECLARE_STRING_ARG(name) DECLARE_ARG(string, name)
 #define DEFINE_STRING_ARG(name, def, argument, description) \
   DEFINE_ARG(string, name, def, def, argument, description)
+
+#define DECLARE_PATH_ARG(name) DECLARE_ARG(string, name)
+#define DEFINE_PATH_ARG(name, def, argument, description)		\
+  DEFINE_CUSTOM_ARG(std::string, name, def,				\
+		    textus::base::init::converter_path,			\
+		    argument, description)
 
 #define DECLARE_DOUBLE_ARG(name) DECLARE_ARG(double, name)
 #define DEFINE_DOUBLE_ARG(name, def, argument, description) \

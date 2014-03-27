@@ -73,16 +73,20 @@ public:
   }
 
   virtual void close() {
-    Synchronized(this);
-    if (fh) {
-      AUTODEREF(FileHandle *, tmp);
-      tmp = fh;
-      tmp->ref();
-      fh = NULL;
-      tmp->setEventFactory(NULL);
-      tmp->close();
+    AUTODEREF(FileHandle *, close_me);
+    {
+      Synchronized(this);
+      if (fh) {
+	close_me = fh;
+	close_me->ref();
+	fh = NULL;
+      }
+      factory = NULL;
     }
-    factory = NULL;
+    if (close_me) {
+      close_me->setEventFactory(NULL);
+      close_me->close();
+    }
   }
 
   string readLine(LineReaderStatus::status &stat);
@@ -108,9 +112,14 @@ public:
   }
 
   void setEof(bool e) {
-    Synchronized(this);
-    eof_flag = e;
-    signal();
+    {
+      Synchronized(this);
+      eof_flag = e;
+      signal();
+    }
+    if (e == true) {
+      close();
+    }
   }
 
   void setEventFactory(LineReaderEventFactory *lref);

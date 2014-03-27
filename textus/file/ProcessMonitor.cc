@@ -137,7 +137,7 @@ Base *reaperThreadStartup(Base *b) {
   sigset_t oset;
   sigemptyset(&set);
   sigaddset(&set, SIGCHLD);
-  pthread_sigmask(SIG_UNBLOCK, &set, &oset);
+  pthread_sigmask(SIG_UNBLOCK, &set, NULL);
   reaper_thread = Thread::self();
   reaper_thread->ref();
   reaper_thread->setDoAll(false);
@@ -147,17 +147,19 @@ Base *reaperThreadStartup(Base *b) {
     pid_t pid;
     sigemptyset(&set);
     sigaddset(&set, SIGCHLD);
+    sigaddset(&set, SIGUSR1);
     pthread_sigmask(SIG_BLOCK, &set, &oset);
-    // Race condition.  If signal comes through
-    // before wait and after the check, we will
-    // block.
     while (Thread::self()->waitingTasks(NULL));
-    pid = ::wait(&stat_loc);
-    if (pid <= 0 && errno == ECHILD) {
-      sigset_t sigmask;
-      sigemptyset(&sigmask);
-      sigsuspend(&sigmask);
-      pthread_sigmask(SIG_SETMASK, &oset, &set);
+    if (reaper_thread_done) {
+      break;
+    }
+    pid = ::waitpid(-1, &stat_loc, WNOHANG);
+    if ((pid < 0 && errno == ECHILD) || pid == 0) {
+      int sig;
+      sigemptyset(&set);
+      sigaddset(&set, SIGCHLD);
+      sigaddset(&set, SIGUSR1);
+      sigwait(&set, &sig);
       continue;
     }
     pthread_sigmask(SIG_SETMASK, &oset, &set);

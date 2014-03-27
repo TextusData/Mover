@@ -1,5 +1,5 @@
 /* ReferenceSet.h -*- c++ -*-
- * Copyright (c) 2009-2012 Ross Biro
+ * Copyright (c) 2009-2012, 2014 Ross Biro
  *
  * A quick set extension that assume all
  * it's entries are of type Base * and
@@ -32,7 +32,7 @@
 #include <set>
 
 #ifndef foreach
-#define foreach(it, container) for (typeof(container.member_iterator) it = container.begin(); it != container.end(); ++it)
+#define foreach(it, container) for (typeof((container).member_iterator) it = (container).begin(); it != (container).end(); ++it)
 #endif
 
 namespace textus { namespace base {

@@ -35,7 +35,7 @@ namespace textus { namespace base {
 using namespace std;
 
 #ifndef foreach
-#define foreach(it, container) for (typeof(container.member_iterator) it = container.begin(); it != container.end(); ++it)
+#define foreach(it, container) for (typeof((container).member_iterator) it = (container).begin(); it != (container).end(); ++it)
 #endif
 
 template <class value_type> class ReferenceList: virtual public Base {

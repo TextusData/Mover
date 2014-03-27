@@ -66,7 +66,7 @@ ExternalEncryption *ExternalEncryption::fromConfig(string name, ConfigData *cd)
 int ExternalEncryption::processTemplate(string in, string *out,
 					KeyDescription *kd) {
   int ret=0;
-  kd->set("app-binary-path", textus::system::Environment::systemEnvironment().getVariable("APP_BINARY_PATH"));
+  kd->setVariables();
   AUTODEREF(Template<KeyDescription *> *, t);
   t = new Template<KeyDescription *>(kd);
   HRNULL(t);

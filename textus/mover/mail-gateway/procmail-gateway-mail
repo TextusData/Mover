@@ -1,0 +1,9 @@
+#VERBOSE=on
+:0
+* !^FROM_DAEMON
+* !$^X-Loop:.*$\DEST
+	| formail -A  "X-Loop: $DEST" | $HOME/bin/mover-send --destination_address=$DEST --send_stdin
+
+DELIVERED=yes
+EXITCODE=0
+

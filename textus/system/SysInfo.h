@@ -43,6 +43,8 @@ public:
   void random(unsigned char *buff, unsigned len);
   bool addressValid(void *vptr);
   std::string getUser();
+  std::string getHomeDir(const std::string &user =
+			 SysInfo::systemInformation()->getUser());
   bool getCPUFlag(std::string flag);
 };
 

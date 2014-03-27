@@ -1,5 +1,5 @@
 /* Template.cc -*- c++ -*-
- * Copyright (c) 2013 Ross Biro
+ * Copyright (c) 2013, 2014 Ross Biro
  *
  */
 
@@ -97,7 +97,7 @@ int TemplateBase::evalConditional(string in, string *out) {
   return 0;
 }
 
-size_t TemplateBase::process(string in, string *out) {
+size_t TemplateBase::process(const string &in, string *out) {
   int ret = 0;
   size_t i;
   bool saw_open = false;
@@ -196,9 +196,10 @@ size_t TemplateBase::process(string in, string *out) {
   return 0;
 
  error_out:
-  for (list<state>::iterator i = stack.begin(); i != stack.end(); ++i) {
-    if (i->out != NULL) {
-      delete i->out;
+  // XXXXXXX FIXME an unmatched < causes a double delete
+  for (list<state>::iterator si = stack.begin(); si != stack.end(); ++si) {
+    if (si->out != NULL) {
+      delete si->out;
     }
   }
   return i;

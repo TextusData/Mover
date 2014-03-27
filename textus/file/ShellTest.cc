@@ -1,5 +1,5 @@
 /* ShellTest.cc -*- c++ -*-
- * Copyright (c) 2010-2013
+ * Copyright (c) 2010-2014
  *
  * Test the shell class.
  */
@@ -54,7 +54,7 @@ ShellTest::~ShellTest()
 
 void ShellTest::run_tests() {
   string long_string;
-  for (int i = 0; i < 100; ++i) {
+  for (int i = 0; i < 4000; ++i) {
     long_string = long_string + "This is a test.  This is only a test.\n";
   }
 

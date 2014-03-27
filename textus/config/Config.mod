@@ -1,4 +1,4 @@
-# Config.mod Copyright(c) 2013 Ross Biro
+# Config.mod Copyright(c) 2013-2014 Ross Biro
 
 #
 #   This program is free software: you can redistribute it and/or
@@ -19,7 +19,7 @@
 cc_sources = [ Config.cc ]
 #proto_sources = [ ],
 target=config.a,
-deps=[ textus/file/File, textus/base/Base ]
+deps=[ textus/file/File, textus/base/Base, textus/template/Template ]
 
 unittests=[
 {

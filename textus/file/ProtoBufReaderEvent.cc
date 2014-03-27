@@ -1,5 +1,5 @@
 /* ProtoBufReaderEvent.cc -*- c++ -*-
- * Copyright (c) 2010 Ross Biro
+ * Copyright (c) 2010, 2014 Ross Biro
  *
  * A class to read a file one message at a time.
  *
@@ -41,8 +41,15 @@ void ProtoBufReaderEvent::setProtoBufReader(ProtoBufReader *lr) {
 }
 
 void ProtoBufReaderEvent::do_it() {
-  Synchronized(this);
-  ProtoBufReader *parent = messageReader();
+  AUTODEREF(ProtoBufReader *, parent);
+  {
+    Synchronized(this);
+    ProtoBufReader *parent = messageReader();
+    if (parent) {
+      parent->ref();
+      setEventTarget(NULL);
+    }
+  }
   if (parent) {
     if (eof_flag) {
       parent->setEof(true);

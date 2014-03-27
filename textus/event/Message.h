@@ -1,5 +1,5 @@
 /* Message.h -*- c++ -*-
- * Copyright (c) 2010 Ross Biro
+ * Copyright (c) 2010, 2014 Ross Biro
  *
  * This class represents a message.  Usually a wrapper around a protobuf.
  */
@@ -116,11 +116,31 @@ public:
     return d + std::string(reinterpret_cast<char *>(buff), sizeof(buff));
   }
 
+  static std::string append(std::string d, uint64_t v) {
+    unsigned char buff[sizeof(v)];
+    for (int i = sizeof(buff) - 1; i >= 0 ; --i) {
+      buff[i] = v & 0xff;
+      v = v >> 8;
+    }
+    return d + std::string(reinterpret_cast<char *>(buff), sizeof(buff));
+  }
+
   static std::string setChecksum(std::string d);
 
   static uint32_t getUint32(std::string d, std::string::size_type offset) {
     uint32_t acc = 0;
-    for (std::string::size_type i = 0; i < sizeof(uint32_t); ++i) {
+    for (std::string::size_type i = 0; i < sizeof(acc); ++i) {
+      acc = acc << 8;
+      unsigned tmp = static_cast<unsigned char>(d[i+offset]);
+      assert((tmp & ~0XFF) == 0);
+      acc += tmp;
+    }
+    return acc;
+  }
+
+  static uint64_t getUint64(std::string d, std::string::size_type offset) {
+    uint64_t acc = 0;
+    for (std::string::size_type i = 0; i < sizeof(acc); ++i) {
       acc = acc << 8;
       unsigned tmp = static_cast<unsigned char>(d[i+offset]);
       assert((tmp & ~0XFF) == 0);

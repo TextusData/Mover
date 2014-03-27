@@ -53,7 +53,10 @@ int KeyBook::readFileSearchPath(const list<string> &paths, string name) {
       continue;
     }
     kd = KeyDescription::fromConfigData(c);
+    HRNULL(kd);
     kd->set(HUMAN_READABLE_NAME, name);
+    kd->setVariables();
+
     foreach (i, descriptions) {
       if ((*i)->addKeyDescription(kd)) {
 	handled = true;
@@ -66,20 +69,28 @@ int KeyBook::readFileSearchPath(const list<string> &paths, string name) {
       HRNULL(mkd);
       mkd->set_encryption(me);
       HRTRUE(mkd->addKeyDescription(kd));
+      descriptions.push_back(mkd);
     }
   }
  error_out:
   return ret;
 }
 
-bool KeyBook::process(Mover *mover, string hash) {
-  string data = mover->getDataForHash(hash);
+bool KeyBook::processData(string data) {
   foreach(i, descriptions) {
-    if ((*i)->process(data)) {
+    if ((*i)->process(this, data)) {
       return true;
     }
   }
   return false;
+}
+
+bool KeyBook::process(Mover *mover, string hash) {
+  string data = mover->getDataForHash(hash);
+  if (data.length() == 0)  {
+    return false;
+  }
+  return processData(data);
 }
 
 }} //namespace

@@ -58,8 +58,8 @@ DEFINE_STRING_ARG(mover_bind_address, ":4669", "mover_bind_address", "The addres
 DEFINE_STRING_ARG(mover_certificate, "", "mover_certificate",
 		  "The certificate path for the ssl connections.  "
 		  "Default is empty which means use a random self signed certificate.");
-DEFINE_STRING_ARG(mover_root, "/data/mover", "mover_root", "the root directory for the mover file store.");
-DEFINE_STRING_ARG(mover_user_root, "$(HOME)/.mover", "mover_user_root", "The directory for the per user configuration and data files.");
+DEFINE_PATH_ARG(mover_root, "/data/mover", "mover_root", "the root directory for the mover file store.");
+DEFINE_PATH_ARG(mover_user_root, "$(HOME)/.mover", "mover_user_root", "The directory for the per user configuration and data files.");
 DEFINE_STRING_ARG(mover_have_file_name, "seen", "mover_have_file", "The file that keeps track of all the hashes we have seen.");
 DEFINE_STRING_ARG(mover_crypto_config, "crypto.cfg", "mover_crypto_config",
 		  "The name of of the file that contains information about "
@@ -83,9 +83,9 @@ DEFINE_STRING_ARG(mover_peers_file, "peers", "mover_peers_file", "The name of th
 DEFINE_INT_ARG(mover_max_peers_connect, 20, "mover_max_peers_connect", "The maximum number of peers to initiate connections to.");
 DEFINE_INT_ARG(mover_min_peers_connect, 5, "mover_min_peers_connect", "The minimum number of peers to initiate connections to.");
 DEFINE_BOOL_ARG(mover_connect_immediately, false, "mover_connect_immediately", "If true, causes the mover to immediately poll some of the peers.  Use with caution.  It might allow an information leak.");
-DEFINE_INT_ARG(mover_max_connection_time, 1200, "mover_max_connection_time", "The maximum time (in seconds) a connection will get kept open.");
-DEFINE_INT_ARG(mover_min_connection_time, 600, "mover_min_connection_time", "The minimum time (in seconds) a connection will be kept open.");
-DEFINE_INT_ARG(mover_connection_timeout, 600, "mover_connection_timeout", "How long to hold open a quiet connection.");
+DEFINE_INT_ARG(mover_max_connection_time, 600, "mover_max_connection_time", "The maximum time (in seconds) a connection will get kept open.");
+DEFINE_INT_ARG(mover_min_connection_time, 300, "mover_min_connection_time", "The minimum time (in seconds) a connection will be kept open.");
+DEFINE_INT_ARG(mover_connection_timeout, 60, "mover_connection_timeout", "How long to hold open a quiet connection.");
 DEFINE_INT_ARG(mover_poll_time, 3600, "mover_poll_time", "Maximum time to wait between polling known peers.");
 DEFINE_INT_ARG(mover_random_mail_probability, 8, "mover_random_mail_probability", "1 in this are the odds of creating a random mail every poll time.");
 DEFINE_INT_ARG(mover_random_message_time, 30, "mover_random_message_time", "Maximum time between sending random messages.");
@@ -296,6 +296,12 @@ string Mover::parseIHave(MoverMessageProcessor *mmp, string m) {
     items.insert(item);
   }
 
+  // it's okay to bail here.  We already told the other side we
+  // already have all these things.
+  if (items.size() == 0) {
+    return ("");
+  }
+
   addIHave(mmp, items);
 
   // With a short list, always ask for everything. 
@@ -326,7 +332,10 @@ string Mover::parseIHave(MoverMessageProcessor *mmp, string m) {
     }
   }
 
-  return join(needed, "\n");
+  string s= join(needed, "\n");
+  LOG(INFO) << "I Want: " << s << "\n";
+
+  return s;
   
 }
 
@@ -398,7 +407,11 @@ void Mover::storeData(string data) {
   }
   string h = hasher()->computeHash(data);
   h = textus::util::hex_encode(h);
+  LOG(DEBUG) << "Mover::storeData got data length=" << data.length()
+	     << ", hash=" << h << "\n";
+
   if (!iWant(h)) {
+    LOG(DEBUG) << "Mover::storeData  Don't wantfile;" << h << "\n";
     return;
   }
   if (have_file() == NULL) {
@@ -411,7 +424,7 @@ void Mover::storeData(string data) {
   HRTRUE(have_file()->write(h + "\n") == (int)h.length() + 1);
   HRC(have_file()->sync());
   HRC(file_store()->newData(data));
-  seen_cache[data] = 1;
+  seen_cache[h] = 1;
  error_out:
   return;
 }
@@ -626,6 +639,7 @@ int Mover::uploadData(string data) {
   MoverMessageProcessor *mmp = NULL;
   AUTODEREF(SecureMessageServer<MoverMessageProcessor> *, ss);
   ss = connectToPeer(mover_bind_address);
+  HRNULL(ss);
   HRC(ss->waitForConnect());
   mmp = ss->getProcessor();
   HRNULL(mmp);
@@ -638,7 +652,7 @@ int Mover::uploadData(string data) {
   return ret;
 }
 
-string Mover::addHeader(uint64_t magic, string data, int type) {
+string Mover::addHeader(uint64_t magic, string data, uint32_t type) {
   string out = Random::head_pad();
   out = Message::append(out, magic);
   out = Message::append(out, type);
